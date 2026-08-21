@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>微觀世界觀測台 — 國中理化 3D 教學版</title>
+<style>
+  :root{
+    --ink:#050d12; --panel:#0d1c25; --panel-2:#0a161d;
+    --line:#1b333f; --line-soft:#132a34;
+    --text:#dcecf1; --dim:#7f9aa5;
+    --accent:#ff6a53;  --accent-soft:rgba(255,106,83,.14);
+    --metal:#ffb347; --nonmetal:#63d9e0; --noble:#b58cf0; --semi:#9fd07a;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"PingFang TC","Noto Sans TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .app{min-height:100%;display:flex;flex-direction:column}
+
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 22px 12px;border-bottom:1px solid var(--line-soft)}
+  h1{margin:0;font-size:19px;font-weight:800;letter-spacing:.1em}
+  h1 span{color:var(--accent)}
+  .sub{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--dim)}
+  .tabs{margin-left:auto;display:flex;gap:4px;background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .tabs button{appearance:none;border:0;background:transparent;color:var(--dim);font-family:var(--sans);
+    font-size:13.5px;padding:8px 16px;border-radius:999px;cursor:pointer;transition:.15s}
+  .tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+
+  /* ---- 選擇區 ---- */
+  .picker{border-bottom:1px solid var(--line-soft);padding:14px 22px 16px;overflow-x:auto}
+  .pwrap{--cell:44px;--gap:4px;overflow-x:auto;padding-bottom:2px}
+  .pwrap.compact{--cell:58px}
+  .phead,.ptable{display:grid;gap:var(--gap);justify-content:center;align-content:start}
+  .phead{grid-template-rows:14px;margin-bottom:4px}
+  .ptable{grid-template-rows:repeat(7,var(--cell))}
+  .pwrap.full .phead,.pwrap.full .ptable{grid-template-columns:repeat(18,var(--cell));
+    min-width:calc(18 * (var(--cell) + var(--gap)))}
+  .pwrap.compact .phead,.pwrap.compact .ptable{grid-template-columns:repeat(8,var(--cell))}
+  .gapnote{display:flex;align-items:center;justify-content:center;text-align:center;
+    border:1px dashed rgba(255,255,255,.06);border-radius:8px;padding:4px 8px;
+    font-size:11px;line-height:1.5;color:#3f606d;z-index:0}
+  .tmwrap{margin-top:12px}
+  .tmwrap .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);display:block;margin-bottom:7px}
+  .tmrow{display:flex;gap:5px;flex-wrap:wrap;--cell:52px}
+  .tmrow .el{flex:none}
+  .layoutbtn{appearance:none;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--dim);
+    border-radius:999px;padding:5px 12px;font-size:11.5px;font-family:var(--sans);margin-left:auto;transition:.13s}
+  .layoutbtn:hover{border-color:#2b5361;color:var(--text)}
+  .gcol{font-family:var(--mono);font-size:9px;color:#3f606d;text-align:center;
+    height:14px;line-height:14px;align-self:end;overflow:hidden}
+  .gcol.main{color:var(--accent);font-weight:700;font-size:10px;letter-spacing:.04em}
+  .el{position:relative;align-self:start}
+  .el.synth::after{content:'';position:absolute;top:4px;right:4px;width:4px;height:4px;border-radius:50%;background:#5c7a86}
+  .cell{width:var(--cell);height:var(--cell);border-radius:7px;border:1px dashed rgba(255,255,255,.05)}
+  .el{appearance:none;cursor:pointer;padding:2px;border-radius:7px;border:1px solid var(--line);
+    background:var(--panel-2);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:1px;transition:.13s;width:var(--cell);height:var(--cell);font-family:var(--sans)}
+  .el .z{font-family:var(--mono);font-size:8.5px;color:var(--dim);line-height:1}
+  .el .s{font-size:15px;font-weight:800;line-height:1.05}
+  .el .n{font-size:9px;color:var(--dim);line-height:1}
+  .el:hover{transform:translateY(-2px)}
+  .el[data-cat="金屬"]{border-color:rgba(255,179,71,.42)} .el[data-cat="金屬"] .s{color:var(--metal)}
+  .el[data-cat="非金屬"]{border-color:rgba(99,217,224,.42)} .el[data-cat="非金屬"] .s{color:var(--nonmetal)}
+  .el[data-cat="惰性氣體"]{border-color:rgba(181,140,240,.45)} .el[data-cat="惰性氣體"] .s{color:var(--noble)}
+  .el[data-cat="類金屬"]{border-color:rgba(159,208,122,.45)} .el[data-cat="類金屬"] .s{color:var(--semi)}
+  .el[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .mnemo{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
+  .mnemo .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);margin-right:2px}
+  .mbtn{appearance:none;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+    border-radius:999px;padding:7px 13px;font-size:13px;font-family:var(--sans);transition:.13s}
+  .mbtn:hover{border-color:#2b5361}
+  .mbtn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:700}
+  .mband{margin-top:13px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:13px 14px}
+  .mband .say{font-size:19px;font-weight:800;letter-spacing:.16em;margin:0 0 11px;color:var(--text)}
+  .seqbar{display:flex;gap:6px;align-items:stretch;overflow-x:auto;padding-bottom:3px}
+  .seq{appearance:none;cursor:pointer;flex:none;border:1px solid var(--line);background:transparent;color:var(--text);
+    border-radius:8px;padding:6px 9px;display:flex;flex-direction:column;align-items:center;gap:1px;transition:.13s;font-family:var(--sans)}
+  .seq .o{font-family:var(--mono);font-size:8.5px;color:var(--dim);line-height:1}
+  .seq .c{font-size:14px;font-weight:700;line-height:1.15}
+  .seq .y{font-family:var(--mono);font-size:9.5px;color:var(--dim);line-height:1}
+  .seq:hover{border-color:#2b5361}
+  .seq[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+  .seq[aria-current="true"] .c{color:var(--accent)}
+  .mnote{margin:11px 0 0;font-size:13px;line-height:1.85;color:#a8c3cc}
+  .el.dim{opacity:.18}
+  .keys{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--dim)}
+  .keys i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:baseline}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .chips .lab{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);margin-right:2px}
+  .chip{appearance:none;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+    border-radius:9px;padding:8px 12px;font-size:13.5px;display:flex;align-items:baseline;gap:6px;transition:.13s}
+  .chip small{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+  .chip:hover{border-color:#2b5361}
+  .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .chip[aria-pressed="true"] small{color:var(--accent)}
+
+  /* ---- 主體 ---- */
+  .main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 330px;min-height:480px}
+  .stage{position:relative;min-height:50vh;border-right:1px solid var(--line-soft);overflow:hidden;
+    background:radial-gradient(720px 500px at 50% 46%, #10242e 0%, #071219 62%, #040b10 100%)}
+  canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
+  canvas:focus-visible{box-shadow:inset 0 0 0 2px var(--nonmetal)}
+  .tag{position:absolute;left:16px;top:14px;pointer-events:none;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:#4d6f7c}
+  .readout{position:absolute;left:16px;bottom:14px;pointer-events:none;font-family:var(--mono);font-size:11.5px;color:#5c8391;line-height:1.75}
+  .readout b{color:var(--nonmetal);font-weight:500}
+  .toolbar{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .tg{display:flex;background:rgba(6,18,24,.75);border:1px solid var(--line);border-radius:999px;padding:3px;backdrop-filter:blur(6px)}
+  .tg button{appearance:none;border:0;background:transparent;color:var(--dim);font-family:var(--sans);
+    font-size:12.5px;padding:6px 12px;border-radius:999px;cursor:pointer;transition:.15s}
+  .tg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+
+  aside{padding:18px 18px 36px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+  .card{border:1px solid var(--line-soft);border-radius:14px;background:var(--panel);padding:16px}
+  .cap{margin:0 0 10px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--dim)}
+  .head{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+  .head h2{margin:0;font-size:23px;font-weight:800;letter-spacing:.03em}
+  .head .f{font-family:var(--mono);font-size:15px;color:var(--accent)}
+  .badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim);margin-bottom:12px}
+  dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:13.5px}
+  dt{color:var(--dim)}
+  dd{margin:0;font-family:var(--mono);font-size:12.5px;text-align:right}
+  .note{margin:13px 0 0;font-size:13.5px;line-height:1.9;color:#a8c3cc;border-top:1px dashed var(--line);padding-top:12px}
+  .legend{display:flex;flex-direction:column;gap:9px}
+  .lrow{display:flex;align-items:center;gap:10px;font-size:13px}
+  .sw{width:15px;height:15px;border-radius:50%;flex:none;box-shadow:inset -2px -3px 5px rgba(0,0,0,.55),inset 2px 3px 5px rgba(255,255,255,.28)}
+  .lrow .sy{font-family:var(--mono);width:22px}
+  .lrow .nm{color:var(--dim)}
+  .srow{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim)}
+  input[type=range]{flex:1;accent-color:var(--accent);height:20px}
+  .ghost{appearance:none;cursor:pointer;width:100%;border:1px solid var(--line);background:transparent;color:var(--dim);
+    border-radius:10px;padding:9px;font-size:13px;transition:.15s;font-family:var(--sans)}
+  .ghost:hover{border-color:#2b5361;color:var(--text)}
+  .hide{display:none!important}
+
+  @media (max-width:900px){
+    .main{grid-template-columns:minmax(0,1fr)}
+    .stage{border-right:0;border-bottom:1px solid var(--line-soft);min-height:44vh}
+    header{padding:12px 14px} .picker{padding:12px 14px} aside{padding:14px}
+    .tabs{width:100%;margin-left:0}
+    .tabs button{flex:1}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>微觀世界觀測台<span>.</span></h1>
+    <span class="sub">國中理化 · 3D</span>
+    <div class="tabs" role="tablist">
+      <button id="tabEl" role="tab" aria-selected="true">元素與原子</button>
+      <button id="tabMol" role="tab" aria-selected="false">分子與晶體</button>
+    </div>
+  </header>
+
+  <div class="picker">
+    <div id="pickEl">
+      <div class="mnemo" id="mnemo"></div>
+      <div class="pwrap full" id="pwrap">
+        <div class="phead" id="phead"></div>
+        <div class="ptable" id="ptable"></div>
+      </div>
+      <div class="tmwrap hide" id="tmwrap">
+        <span class="lab">常見過渡元素</span>
+        <div class="tmrow" id="tmrow"></div>
+      </div>
+      <div class="mband hide" id="mband">
+        <p class="say" id="mSay"></p>
+        <div class="seqbar" id="mSeq"></div>
+        <p class="mnote" id="mNote"></p>
+      </div>
+      <div class="keys">
+        <span><i style="background:var(--metal)"></i>金屬</span>
+        <span><i style="background:var(--nonmetal)"></i>非金屬</span>
+        <span><i style="background:var(--semi)"></i>類金屬</span>
+        <span><i style="background:var(--noble)"></i>惰性氣體（鈍氣）</span>
+        <span style="color:#3f606d">右上小點＝人工合成元素</span>
+        <button class="layoutbtn" id="layoutBtn" type="button"></button>
+      </div>
+    </div>
+    <div id="pickMol" class="hide">
+      <div class="chips" id="chipsA" style="margin-bottom:9px"></div>
+      <div class="chips" id="chipsB"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <section class="stage">
+      <canvas id="view" tabindex="0" aria-label="三維結構檢視區，可用方向鍵旋轉"></canvas>
+      <div class="tag" id="tag"></div>
+      <div class="readout" id="readout"></div>
+      <div class="toolbar">
+        <div class="tg" id="modeGroup">
+          <button data-mode="ball" aria-pressed="true">球棍</button>
+          <button data-mode="fill" aria-pressed="false">實體</button>
+        </div>
+        <div class="tg">
+          <button id="btnLabel" aria-pressed="true">標示</button>
+          <button id="btnSpin" aria-pressed="true">自轉</button>
+        </div>
+      </div>
+    </section>
+
+    <aside>
+      <div class="card">
+        <div class="head"><h2 id="tName"></h2><span class="f" id="tFormula"></span></div>
+        <span class="badge" id="tBadge"></span>
+        <dl id="tFacts"></dl>
+        <p class="note" id="tNote"></p>
+      </div>
+      <div class="card" id="legendCard">
+        <p class="cap">圖例</p>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="card">
+        <div class="srow"><span>轉速</span><input id="speed" type="range" min="0" max="100" value="34"></div>
+        <div class="srow" style="margin-top:10px"><span>縮放</span><input id="zoom" type="range" min="60" max="220" value="100"></div>
+        <button class="ghost" id="reset" style="margin-top:12px">重設視角</button>
+        <p style="margin:12px 0 0;font-size:12px;color:var(--dim);line-height:1.7">拖曳可旋轉，滾輪或雙指縮放，也可用方向鍵。</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ==================== 元素資料 ==================== */
+/* col/row = 週期表位置；shells = 各層電子數；a = 常見質量數 */
+const EL = {
+ H :{zh:'氫',z:1,a:1,shells:[1],cat:'非金屬',state:'氣體',col:1,row:1,color:'#eef4f6',cov:0.31,vdw:1.20,
+     use:'最輕的元素。燃燒後只生成水，被視為乾淨的燃料。'},
+ He:{zh:'氦',z:2,a:4,shells:[2],cat:'惰性氣體',state:'氣體',col:18,row:1,color:'#c6f4ff',cov:0.28,vdw:1.40,
+     use:'比空氣輕又幾乎不與任何物質反應，用來填充氣球與飛船。'},
+ Li:{zh:'鋰',z:3,a:7,shells:[2,1],cat:'金屬',state:'固體',col:1,row:2,color:'#cc80ff',cov:1.28,vdw:1.82,
+     use:'最輕的金屬，是手機與電動車鋰電池的主角。'},
+ Be:{zh:'鈹',z:4,a:9,shells:[2,2],cat:'金屬',state:'固體',col:2,row:2,color:'#c2ff3d',cov:0.96,vdw:1.53,
+     use:'又輕又硬，多用在飛機與精密儀器的合金。'},
+ B :{zh:'硼',z:5,a:11,shells:[2,3],cat:'類金屬',state:'固體',col:13,row:2,color:'#ffb5b5',cov:0.84,vdw:1.92,
+     use:'加進玻璃可以耐熱，實驗室的燒杯多半含硼。'},
+ C :{zh:'碳',z:6,a:12,shells:[2,4],cat:'非金屬',state:'固體',col:14,row:2,color:'#5d6673',cov:0.76,vdw:1.70,
+     use:'生命的骨架元素。鑽石與石墨都是純碳，只是排列方式不同。'},
+ N :{zh:'氮',z:7,a:14,shells:[2,5],cat:'非金屬',state:'氣體',col:15,row:2,color:'#4c7bf5',cov:0.71,vdw:1.55,
+     use:'約佔空氣的 78%，性質安定，也是植物肥料的主要成分。'},
+ O :{zh:'氧',z:8,a:16,shells:[2,6],cat:'非金屬',state:'氣體',col:16,row:2,color:'#ff5a4d',cov:0.66,vdw:1.52,
+     use:'約佔空氣的 21%。呼吸與燃燒都少不了它。'},
+ F :{zh:'氟',z:9,a:19,shells:[2,7],cat:'非金屬',state:'氣體',col:17,row:2,color:'#90e050',cov:0.57,vdw:1.47,
+     use:'活性最強的非金屬。牙膏加氟可以保護牙齒。'},
+ Ne:{zh:'氖',z:10,a:20,shells:[2,8],cat:'惰性氣體',state:'氣體',col:18,row:2,color:'#a6e6f5',cov:0.58,vdw:1.54,
+     use:'通電會發出橘紅色光，霓虹燈因此得名。'},
+ Na:{zh:'鈉',z:11,a:23,shells:[2,8,1],cat:'金屬',state:'固體',col:1,row:3,color:'#b06cf0',cov:1.66,vdw:2.27,
+     use:'很活潑的金屬，遇水會劇烈反應。食鹽（氯化鈉）就含有鈉。'},
+ Mg:{zh:'鎂',z:12,a:24,shells:[2,8,2],cat:'金屬',state:'固體',col:2,row:3,color:'#8aff00',cov:1.41,vdw:1.73,
+     use:'燃燒時發出耀眼白光，也是葉綠素的核心原子。'},
+ Al:{zh:'鋁',z:13,a:27,shells:[2,8,3],cat:'金屬',state:'固體',col:13,row:3,color:'#bfa6a6',cov:1.21,vdw:1.84,
+     use:'又輕又抗鏽。鋁箔、鋁罐、飛機外殼都靠它。'},
+ Si:{zh:'矽',z:14,a:28,shells:[2,8,4],cat:'類金屬',state:'固體',col:14,row:3,color:'#f0c8a0',cov:1.11,vdw:2.10,
+     use:'沙子的主要成分，也是半導體晶片的材料。'},
+ P :{zh:'磷',z:15,a:31,shells:[2,8,5],cat:'非金屬',state:'固體',col:15,row:3,color:'#ff8000',cov:1.07,vdw:1.80,
+     use:'火柴頭含磷；骨骼與 DNA 裡也有磷。'},
+ S :{zh:'硫',z:16,a:32,shells:[2,8,6],cat:'非金屬',state:'固體',col:16,row:3,color:'#ffe23d',cov:1.05,vdw:1.80,
+     use:'黃色固體，燃燒後生成有刺激臭味的二氧化硫。'},
+ Cl:{zh:'氯',z:17,a:35,shells:[2,8,7],cat:'非金屬',state:'氣體',col:17,row:3,color:'#3fd67a',cov:1.02,vdw:1.75,
+     use:'黃綠色有毒氣體，可用來消毒自來水與游泳池。'},
+ Ar:{zh:'氬',z:18,a:40,shells:[2,8,8],cat:'惰性氣體',state:'氣體',col:18,row:3,color:'#80d1e3',cov:1.06,vdw:1.88,
+     use:'幾乎不反應，用來保護焊接處、填充燈泡。'},
+ K :{zh:'鉀',z:19,a:39,shells:[2,8,8,1],cat:'金屬',state:'固體',col:1,row:4,color:'#8f40d4',cov:2.03,vdw:2.75,
+     use:'活潑金屬，也是人體神經傳導必需的礦物質。'},
+ Ca:{zh:'鈣',z:20,a:40,shells:[2,8,8,2],cat:'金屬',state:'固體',col:2,row:4,color:'#5dff3d',cov:1.76,vdw:2.31,
+     use:'骨骼與牙齒的主成分；石灰石、貝殼也含鈣。'},
+ Fe:{zh:'鐵',z:26,a:56,shells:[2,8,14,2],cat:'金屬',state:'固體',col:8,row:4,color:'#e06633',cov:1.32,vdw:2.04,
+     use:'用量最大的金屬，是鋼鐵的主角，也在血紅素中負責運送氧。'},
+ Cu:{zh:'銅',z:29,a:64,shells:[2,8,18,1],cat:'金屬',state:'固體',col:11,row:4,color:'#e08a3c',cov:1.32,vdw:1.40,
+     use:'導電、導熱都很好，電線與硬幣常用。'},
+ Zn:{zh:'鋅',z:30,a:65,shells:[2,8,18,2],cat:'金屬',state:'固體',col:12,row:4,color:'#8d90c0',cov:1.22,vdw:1.39,
+     use:'鍍在鐵表面可防鏽，乾電池外殼也用鋅。'},
+ Br:{zh:'溴',z:35,a:80,shells:[2,8,18,7],cat:'非金屬',state:'液體',col:17,row:4,color:'#c33a3a',cov:1.20,vdw:1.85,
+     use:'常溫下唯一的液態非金屬，紅棕色、有刺鼻味。'},
+ Ag:{zh:'銀',z:47,a:108,shells:[2,8,18,18,1],cat:'金屬',state:'固體',col:11,row:5,color:'#d0d0d8',cov:1.45,vdw:1.72,
+     use:'導電性最好的金屬，也用於首飾與電子接點。'},
+ I :{zh:'碘',z:53,a:127,shells:[2,8,18,18,7],cat:'非金屬',state:'固體',col:17,row:5,color:'#a83bb8',cov:1.39,vdw:1.98,
+     use:'紫黑色固體，加熱會直接昇華成紫色蒸氣。'},
+ Au:{zh:'金',z:79,a:197,shells:[2,8,18,32,18,1],cat:'金屬',state:'固體',col:11,row:6,color:'#ffd123',cov:1.36,vdw:1.66,
+     use:'極不易生鏽，能長久保持光澤，用於首飾與電子接點。'},
+ Hg:{zh:'汞',z:80,a:201,shells:[2,8,18,32,18,2],cat:'金屬',state:'液體',col:12,row:6,color:'#b8b8d0',cov:1.32,vdw:1.55,
+     use:'常溫下唯一的液態金屬，有毒，過去用於溫度計。'},
+ Pb:{zh:'鉛',z:82,a:207,shells:[2,8,18,32,18,4],cat:'金屬',state:'固體',col:14,row:6,color:'#7f8896',cov:1.46,vdw:2.02,
+     use:'密度大而柔軟，有毒，可用來阻擋 X 光。'},
+ /* --- 補齊口訣所需 --- */
+ Kr:{zh:'氪',z:36,a:84,shells:[2,8,18,8],cat:'惰性氣體',state:'氣體',col:18,row:4,color:'#5cb8d1',cov:1.16,vdw:2.02,
+     use:'用於高效率燈泡與閃光燈，性質安定幾乎不反應。'},
+ Rb:{zh:'銣',z:37,a:85,shells:[2,8,18,8,1],cat:'金屬',state:'固體',col:1,row:5,color:'#8b3ec4',cov:2.20,vdw:3.03,
+     use:'極活潑的鹼金屬，遇水立刻劇烈反應，用於原子鐘。'},
+ Sr:{zh:'鍶',z:38,a:88,shells:[2,8,18,8,2],cat:'金屬',state:'固體',col:2,row:5,color:'#42ff42',cov:1.95,vdw:2.49,
+     use:'燃燒時發出鮮紅色火焰，是紅色煙火的來源。'},
+ Sn:{zh:'錫',z:50,a:119,shells:[2,8,18,18,4],cat:'金屬',state:'固體',col:14,row:5,color:'#8a9c9c',cov:1.39,vdw:2.17,
+     use:'熔點低，用來焊接電路；鍍在鐵罐上防鏽就是馬口鐵。'},
+ Xe:{zh:'氙',z:54,a:131,shells:[2,8,18,18,8],cat:'惰性氣體',state:'氣體',col:18,row:5,color:'#429eb0',cov:1.40,vdw:2.16,
+     use:'通電後發出很強的白光，用於汽車頭燈與投影機。'},
+ Cs:{zh:'銫',z:55,a:133,shells:[2,8,18,18,8,1],cat:'金屬',state:'固體',col:1,row:6,color:'#6f2fa8',cov:2.44,vdw:3.43,
+     use:'最活潑的金屬之一。銫原子鐘定義了「1 秒」有多長。'},
+ Ba:{zh:'鋇',z:56,a:137,shells:[2,8,18,18,8,2],cat:'金屬',state:'固體',col:2,row:6,color:'#00c900',cov:2.15,vdw:2.68,
+     use:'硫酸鋇能擋 X 光，是照胃部前喝的顯影劑；燃燒呈綠色火焰。'},
+ Pt:{zh:'鉑（白金）',z:78,a:195,shells:[2,8,18,32,17,1],cat:'金屬',state:'固體',col:10,row:6,color:'#d5d5e2',cov:1.36,vdw:1.75,
+     use:'極不易反應，用於首飾，也是汽車觸媒轉換器的關鍵材料。'},
+ At:{zh:'砈',z:85,a:210,shells:[2,8,18,32,18,7],cat:'非金屬',state:'固體',col:17,row:6,color:'#8c5a4a',cov:1.50,vdw:2.02,
+     use:'極稀有的放射性鹵素，整個地殼中同時存在的量不到一茶匙。'},
+ Rn:{zh:'氡',z:86,a:222,shells:[2,8,18,32,18,8],cat:'惰性氣體',state:'氣體',col:18,row:6,color:'#428296',cov:1.50,vdw:2.20,
+     use:'有放射性的惰性氣體，會從岩石與土壤中自然滲出。'},
+ Fr:{zh:'鍅',z:87,a:223,shells:[2,8,18,32,18,8,1],cat:'金屬',state:'固體',col:1,row:7,color:'#5a2a80',cov:2.60,vdw:3.48,
+     use:'放射性極強且存在時間極短，是自然界最稀有的元素之一。'},
+ Ra:{zh:'鐳',z:88,a:226,shells:[2,8,18,32,18,8,2],cat:'金屬',state:'固體',col:2,row:7,color:'#00a000',cov:2.21,vdw:2.83,
+     use:'具強放射性，由居禮夫人發現，早期曾被用在夜光塗料上。'},
+ /* --- 補齊 3A~6A 主族 --- */
+ Ga:{zh:'鎵',z:31,a:70,shells:[2,8,18,3],cat:'金屬',state:'固體',col:13,row:4,color:'#c28f8f',cov:1.22,vdw:1.87,
+     use:'熔點只有約 30°C，握在手心就會融化；氮化鎵是快充充電器的關鍵材料。'},
+ Ge:{zh:'鍺',z:32,a:73,shells:[2,8,18,4],cat:'類金屬',state:'固體',col:14,row:4,color:'#7fa0a0',cov:1.20,vdw:2.11,
+     use:'第一顆電晶體用的就是鍺，現在多用於光纖與紅外線鏡頭。'},
+ As:{zh:'砷',z:33,a:75,shells:[2,8,18,5],cat:'類金屬',state:'固體',col:15,row:4,color:'#bd80e3',cov:1.19,vdw:1.85,
+     use:'俗稱砒霜的主成分，有劇毒；微量用於半導體材料砷化鎵。'},
+ Se:{zh:'硒',z:34,a:79,shells:[2,8,18,6],cat:'非金屬',state:'固體',col:16,row:4,color:'#ffa100',cov:1.20,vdw:1.90,
+     use:'人體必需的微量元素，也用在影印機的感光鼓上。'},
+ In:{zh:'銦',z:49,a:115,shells:[2,8,18,18,3],cat:'金屬',state:'固體',col:13,row:5,color:'#b78e8c',cov:1.42,vdw:1.93,
+     use:'氧化銦錫是觸控螢幕透明電極的材料，手機螢幕少不了它。'},
+ Sb:{zh:'銻',z:51,a:122,shells:[2,8,18,18,5],cat:'類金屬',state:'固體',col:15,row:5,color:'#a874bd',cov:1.39,vdw:2.06,
+     use:'與鉛做成合金可增加硬度，也用於防火材料的阻燃劑。'},
+ Te:{zh:'碲',z:52,a:128,shells:[2,8,18,18,6],cat:'類金屬',state:'固體',col:16,row:5,color:'#d47a00',cov:1.38,vdw:2.06,
+     use:'用於薄膜太陽能電池與合金，在地殼中相當稀有。'},
+ Tl:{zh:'鉈',z:81,a:204,shells:[2,8,18,32,18,3],cat:'金屬',state:'固體',col:13,row:6,color:'#a6544d',cov:1.45,vdw:1.96,
+     use:'劇毒的重金屬，無色無味，過去曾被誤用為毒藥，現在受嚴格管制。'},
+ Bi:{zh:'鉍',z:83,a:209,shells:[2,8,18,32,18,5],cat:'金屬',state:'固體',col:15,row:6,color:'#b05cc4',cov:1.48,vdw:2.07,
+     use:'少見的無毒重金屬，是部分胃藥的成分；結晶會呈現彩虹色的階梯狀。'},
+ Po:{zh:'釙',z:84,a:209,shells:[2,8,18,32,18,6],cat:'類金屬',state:'固體',col:16,row:6,color:'#c46a00',cov:1.40,vdw:1.97,
+     use:'具強放射性，由居禮夫人發現，以她的故鄉波蘭命名。'},
+ /* --- 第 7 週期主族（人工合成） --- */
+ Nh:{zh:'鉨',z:113,a:286,shells:[2,8,18,32,32,18,3],cat:'金屬',state:'未知',synth:1,col:13,row:7,color:'#8a7a99',cov:1.60,vdw:2.20,
+     use:'由日本理化學研究所合成並命名，是第一個由亞洲國家命名的元素。'},
+ Fl:{zh:'鈇',z:114,a:289,shells:[2,8,18,32,32,18,4],cat:'金屬',state:'未知',synth:1,col:14,row:7,color:'#7a8a99',cov:1.60,vdw:2.20,
+     use:'人工合成，紀念俄國核物理學家弗列洛夫。'},
+ Mc:{zh:'鏌',z:115,a:290,shells:[2,8,18,32,32,18,5],cat:'金屬',state:'未知',synth:1,col:15,row:7,color:'#997a8a',cov:1.60,vdw:2.20,
+     use:'人工合成，以進行研究的莫斯科州命名。'},
+ Lv:{zh:'鉝',z:116,a:293,shells:[2,8,18,32,32,18,6],cat:'金屬',state:'未知',synth:1,col:16,row:7,color:'#998a7a',cov:1.60,vdw:2.20,
+     use:'人工合成，以美國利弗莫爾實驗室命名。'},
+ Ts:{zh:'鿬',z:117,a:294,shells:[2,8,18,32,32,18,7],cat:'非金屬',state:'未知',synth:1,col:17,row:7,color:'#8a997a',cov:1.60,vdw:2.20,
+     use:'人工合成的鹵素族元素，以美國田納西州命名。'},
+ Og:{zh:'鿫',z:118,a:294,shells:[2,8,18,32,32,18,8],cat:'惰性氣體',state:'未知',synth:1,col:18,row:7,color:'#7a9999',cov:1.60,vdw:2.20,
+     use:'目前原子序最大的元素。雖然排在惰性氣體族，但科學家推測它的性質可能和上面幾個很不一樣。'}
+};
+
+/* ==================== 常用口訣 ==================== */
+const MNEMO=[
+{id:'p20',title:'前 20 元素',text:'氫氦鋰鈹硼　碳氮氧氟氖　鈉鎂鋁矽磷　硫氯氬鉀鈣',
+ seq:['H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca'],
+ note:'依原子序 1 到 20 排列，四個一組唸最好記。原子序就是質子數，也等於中性原子的電子數。'},
+{id:'act',title:'金屬活性大小',text:'鉀鈣鈉鎂鋁　鋅鐵錫鉛氫　銅汞銀鉑金',
+ seq:['K','Ca','Na','Mg','Al','Zn','Fe','Sn','Pb','H','Cu','Hg','Ag','Pt','Au'],
+ note:'愈前面愈活潑、愈容易失去電子。排在氫前面的金屬能與稀酸反應產生氫氣，排在氫後面的銅、汞、銀、鉑、金則不行——這也是金和鉑能長久保持光澤的原因。'},
+{id:'g1',title:'鹼金屬（第 1 族）',text:'鋰鈉鉀銣銫鍅',seq:['Li','Na','K','Rb','Cs','Fr'],
+ note:'最外層都只有 1 個電子，很容易失去而形成 +1 價離子，愈往下愈活潑，都必須泡在油裡保存。氫雖然也排在第 1 族，但它是非金屬。'},
+{id:'g2',title:'鹼土金屬（第 2 族）',text:'鈹鎂鈣鍶鋇鐳',seq:['Be','Mg','Ca','Sr','Ba','Ra'],
+ note:'最外層都有 2 個電子，會失去後形成 +2 價離子。它們燃燒時各有代表色：鎂是白光、鈣是橘紅、鍶是鮮紅、鋇是綠色，煙火的顏色就是這樣調出來的。'},
+{id:'g17',title:'鹵素（第 17 族）',text:'氟氯溴碘砈',seq:['F','Cl','Br','I','At'],
+ note:'最外層有 7 個電子，只差 1 個就填滿，所以很容易搶電子形成 −1 價離子。常溫下由上往下依序是氣體（氟、氯）、液體（溴）、固體（碘），狀態變化很規律。'},
+{id:'g18',title:'惰性氣體（第 18 族）',text:'氦氖氬氪氙氡',seq:['He','Ne','Ar','Kr','Xe','Rn'],
+ note:'最外層電子已經填滿（氦是 2 個，其餘都是 8 個），不必得也不必失電子，因此幾乎不與任何物質反應，在自然界都以單獨一個原子的形式存在。'},
+{id:'dia',title:'雙原子分子',text:'氫氮氧氟氯溴碘',seq:['H','N','O','F','Cl','Br','I'],
+ note:'這七種元素在自然界不會單獨存在，一定兩兩成對：H₂、N₂、O₂、F₂、Cl₂、Br₂、I₂。寫化學式時別漏掉右下角的 2。'}
+];
+
+/* ==================== 主族 1A~8A ==================== */
+const FAMILY=[
+{id:'g1a',title:'1A',text:'鹼金屬　最外層 1 個電子　→　易失去 1 個，形成 +1 價離子',
+ seq:['H','Li','Na','K','Rb','Cs','Fr'],
+ note:'最外層都只有 1 個電子。除了氫是非金屬以外，其餘都是鹼金屬，極容易把那個電子丟掉，愈往下愈活潑，必須泡在油裡保存。'},
+{id:'g2a',title:'2A',text:'鹼土金屬　最外層 2 個電子　→　易失去 2 個，形成 +2 價離子',
+ seq:['Be','Mg','Ca','Sr','Ba','Ra'],
+ note:'活性比同一週期的 1A 稍弱。它們燃燒時各有代表色——鎂是白光、鈣是橘紅、鍶是鮮紅、鋇是綠色，煙火的顏色就是這樣調出來的。'},
+{id:'g3a',title:'3A',text:'硼族　最外層 3 個電子　→　常形成 +3 價離子',
+ seq:['B','Al','Ga','In','Tl','Nh'],
+ note:'最上面的硼是類金屬，往下就都是金屬了。鋁是這一族最常見的元素，也是地殼中含量最多的金屬。'},
+{id:'g4a',title:'4A',text:'碳族　最外層 4 個電子　→　傾向共用電子，形成 4 個共價鍵',
+ seq:['C','Si','Ge','Sn','Pb','Fl'],
+ note:'最外層剛好一半，要失去 4 個或得到 4 個都很吃力，所以偏好和別人「共用」電子。這一族由上到下從非金屬（碳）經類金屬（矽、鍺）變成金屬（錫、鉛），是最能看出「金屬性由上往下增強」的一族。'},
+{id:'g5a',title:'5A',text:'氮族　最外層 5 個電子　→　可得 3 個，形成 −3 價離子',
+ seq:['N','P','As','Sb','Bi','Mc'],
+ note:'氮佔了空氣的 78%，磷是骨骼與 DNA 的必要成分。再往下的砷、銻是類金屬，鉍則是金屬——同樣呈現由非金屬漸變為金屬的趨勢。'},
+{id:'g6a',title:'6A',text:'氧族　最外層 6 個電子　→　可得 2 個，形成 −2 價離子',
+ seq:['O','S','Se','Te','Po','Lv'],
+ note:'只差 2 個電子就填滿，所以很會搶電子。氧和硫是課本中最常出現的兩個，它們與金屬結合就形成氧化物與硫化物。'},
+{id:'g7a',title:'7A',text:'鹵素　最外層 7 個電子　→　可得 1 個，形成 −1 價離子',
+ seq:['F','Cl','Br','I','At','Ts'],
+ note:'只差 1 個電子就填滿，是最容易搶電子的一族，活性極強。常溫下的狀態由上往下規律變化：氟、氯是氣體，溴是液體，碘是固體。'},
+{id:'g8a',title:'8A',text:'惰性氣體　最外層已填滿　→　幾乎不形成離子',
+ seq:['He','Ne','Ar','Kr','Xe','Rn','Og'],
+ note:'最外層電子已經填滿（氦是 2 個，其餘都是 8 個），不必得也不必失電子，因此幾乎不與任何物質反應，在自然界都以單獨一個原子的形式存在。其他元素會反應，正是為了讓最外層變得像它們一樣滿。'}
+];
+const SETS=[...FAMILY,...MNEMO];
+const EL_ORDER = Object.keys(EL);
+
+/* 週期表可能出現的位置（主族＋第 4~6 週期完整列） */
+function tableSlots(){
+  const s=[];
+  s.push([1,1],[18,1]);
+  [2,3].forEach(r=>{ s.push([1,r],[2,r]); for(let c=13;c<=18;c++) s.push([c,r]); });
+  [4,5,6,7].forEach(r=>{ for(let c=1;c<=18;c++) s.push([c,r]); });
+  return s;
+}
+
+/* ==================== 分子與晶體 ==================== */
+function autoBonds(atoms,max){const b=[];for(let i=0;i<atoms.length;i++)for(let j=i+1;j<atoms.length;j++){
+  const dx=atoms[i][1]-atoms[j][1],dy=atoms[i][2]-atoms[j][2],dz=atoms[i][3]-atoms[j][3];
+  if(dx*dx+dy*dy+dz*dz<max*max)b.push([i,j,1]);}return b;}
+function nacl(n,a){const atoms=[];for(let i=0;i<n;i++)for(let j=0;j<n;j++)for(let k=0;k<n;k++)
+  atoms.push([(i+j+k)%2===0?'Na':'Cl',i*a,j*a,k*a]);return{atoms,bonds:autoBonds(atoms,a*1.06)};}
+function diamond(){const a=3.567,base=[[0,0,0],[0,.5,.5],[.5,0,.5],[.5,.5,0],[.25,.25,.25],[.25,.75,.75],[.75,.25,.75],[.75,.75,.25]],atoms=[];
+  for(let i=0;i<2;i++)for(let j=0;j<2;j++)for(let k=0;k<2;k++)base.forEach(p=>atoms.push(['C',(i+p[0])*a,(j+p[1])*a,(k+p[2])*a]));
+  return{atoms,bonds:autoBonds(atoms,1.70)};}
+function graphite(){const atoms=[],A1=[2.46,0],A2=[1.23,2.13],B=[[0,0],[1.23,0.71]];
+  [[0,0,0],[1.23,0.71,3.35]].forEach(o=>{for(let i=0;i<3;i++)for(let j=0;j<3;j++)B.forEach(b=>
+    atoms.push(['C',i*A1[0]+j*A2[0]+b[0]+o[0],i*A1[1]+j*A2[1]+b[1]+o[1],o[2]]));});
+  return{atoms,bonds:autoBonds(atoms,1.60)};}
+function fccMetal(sym,a){const base=[[0,0,0],[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms=[];
+  for(let i=0;i<2;i++)for(let j=0;j<2;j++)for(let k=0;k<2;k++)base.forEach(p=>atoms.push([sym,(i+p[0])*a,(j+p[1])*a,(k+p[2])*a]));
+  return{atoms,bonds:autoBonds(atoms,a*0.75)};}
+
+
+const T4=1.09/Math.sqrt(3);
+const MOL=[
+{id:'h2',g:'A',name:'氫氣',short:'H₂',formula:'H₂',badge:'元素（雙原子分子）',
+ atoms:[['H',-0.37,0,0],['H',0.37,0,0]],bonds:[[0,1,1]],
+ facts:[['分類','元素（純物質）'],['組成','2 個氫原子'],['分子量','2'],['常溫狀態','氣體']],
+ note:'兩個氫原子共用電子形成一個共價鍵。氫氣是最輕的氣體，點燃後與氧結合成水，不會產生二氧化碳。'},
+{id:'o2',g:'A',name:'氧氣',short:'O₂',formula:'O₂',badge:'元素（雙原子分子）',
+ atoms:[['O',-0.605,0,0],['O',0.605,0,0]],bonds:[[0,1,2]],
+ facts:[['分類','元素（純物質）'],['組成','2 個氧原子'],['分子量','32'],['常溫狀態','氣體']],
+ note:'空氣中約有 21% 是氧氣。兩個氧原子之間共用兩對電子（圖中畫成兩條線），呼吸作用與燃燒都需要它。'},
+{id:'n2',g:'A',name:'氮氣',short:'N₂',formula:'N₂',badge:'元素（雙原子分子）',
+ atoms:[['N',-0.55,0,0],['N',0.55,0,0]],bonds:[[0,1,3]],
+ facts:[['分類','元素（純物質）'],['組成','2 個氮原子'],['分子量','28'],['常溫狀態','氣體']],
+ note:'空氣中約 78% 是氮氣。兩個氮原子被三個共價鍵牢牢綁住，很難拆開，所以氮氣性質非常安定，常拿來填充食品包裝防止氧化。'},
+{id:'cl2',g:'A',name:'氯氣',short:'Cl₂',formula:'Cl₂',badge:'元素（雙原子分子）',
+ atoms:[['Cl',-0.995,0,0],['Cl',0.995,0,0]],bonds:[[0,1,1]],
+ facts:[['分類','元素（純物質）'],['組成','2 個氯原子'],['分子量','71'],['常溫狀態','氣體']],
+ note:'黃綠色、有刺激性且有毒的氣體。因為能殺死細菌，自來水與游泳池會用含氯藥劑消毒。'},
+{id:'h2o',g:'A',name:'水',short:'H₂O',formula:'H₂O',badge:'化合物',
+ atoms:[['O',0,0.117,0],['H',0.757,-0.468,0],['H',-0.757,-0.468,0]],bonds:[[0,1,1],[0,2,1]],
+ facts:[['分類','化合物'],['組成','2 個氫 + 1 個氧'],['分子量','18'],['形狀','彎曲形（V 形）'],['鍵角','104.5°']],
+ note:'水分子不是一直線，而是彎曲的 V 形。正因為彎曲，水分子一端偏正、另一端偏負，分子之間會互相吸引，所以水的沸點比同樣大小的分子高很多。'},
+{id:'co2',g:'A',name:'二氧化碳',short:'CO₂',formula:'CO₂',badge:'化合物',
+ atoms:[['C',0,0,0],['O',1.16,0,0],['O',-1.16,0,0]],bonds:[[0,1,2],[0,2,2]],
+ facts:[['分類','化合物'],['組成','1 個碳 + 2 個氧'],['分子量','44'],['形狀','直線形']],
+ note:'呼吸與燃燒的產物，能使澄清石灰水變混濁，是檢驗二氧化碳的方法。固態的二氧化碳就是乾冰，會直接昇華成氣體。'},
+{id:'co',g:'A',name:'一氧化碳',short:'CO',formula:'CO',badge:'化合物',
+ atoms:[['C',-0.565,0,0],['O',0.565,0,0]],bonds:[[0,1,3]],
+ facts:[['分類','化合物'],['組成','1 個碳 + 1 個氧'],['分子量','28'],['常溫狀態','氣體']],
+ note:'燃燒時氧氣不足（不完全燃燒）就會生成一氧化碳。它無色無味卻有劇毒，會搶走血紅素運送氧氣的位置，所以熱水器一定要保持通風。'},
+{id:'hcl',g:'A',name:'氯化氫',short:'HCl',formula:'HCl',badge:'化合物',
+ atoms:[['Cl',0.32,0,0],['H',-0.95,0,0]],bonds:[[0,1,1]],
+ facts:[['分類','化合物'],['組成','1 個氫 + 1 個氯'],['分子量','36.5'],['溶於水後','鹽酸（強酸）']],
+ note:'由一個氫和一個氯共用電子組成。溶進水裡會放出氫離子，就成為我們熟悉的鹽酸；胃液裡也含有鹽酸。'},
+{id:'nh3',g:'A',name:'氨',short:'NH₃',formula:'NH₃',badge:'化合物',
+ atoms:[['N',0,0,0],['H',0.9375,0,-0.3757],['H',-0.4687,0.8118,-0.3757],['H',-0.4687,-0.8118,-0.3757]],
+ bonds:[[0,1,1],[0,2,1],[0,3,1]],
+ facts:[['分類','化合物'],['組成','1 個氮 + 3 個氫'],['分子量','17'],['形狀','三角錐形']],
+ note:'有強烈刺鼻味的氣體，極易溶於水，水溶液呈鹼性。工業上大量製造氨，主要用來做肥料。'},
+{id:'ch4',g:'A',name:'甲烷',short:'CH₄',formula:'CH₄',badge:'化合物',
+ atoms:[['C',0,0,0],['H',T4,T4,T4],['H',T4,-T4,-T4],['H',-T4,T4,-T4],['H',-T4,-T4,T4]],
+ bonds:[[0,1,1],[0,2,1],[0,3,1],[0,4,1]],
+ facts:[['分類','化合物'],['組成','1 個碳 + 4 個氫'],['分子量','16'],['形狀','正四面體']],
+ note:'天然氣的主要成分。四個氫原子平均分佈在碳的周圍，形成正四面體，任兩個氫與碳的夾角都是 109.5°。轉一圈看看，從任何方向看都一樣勻稱。'},
+{id:'etoh',g:'A',name:'乙醇（酒精）',short:'C₂H₅OH',formula:'C₂H₅OH',badge:'化合物',
+ atoms:[['C',1.1879,-0.3829,0],['C',0,0.5526,0],['O',-1.1867,-0.2472,0],['H',-1.9237,0.385,0],
+        ['H',0.0227,1.2072,0.8801],['H',0.0227,1.2072,-0.8801],['H',2.0985,0.2306,0],
+        ['H',1.178,-1.0093,0.8869],['H',1.178,-1.0093,-0.8869]],
+ bonds:[[0,1,1],[1,2,1],[2,3,1],[1,4,1],[1,5,1],[0,6,1],[0,7,1],[0,8,1]],
+ facts:[['分類','化合物'],['組成','2 碳 + 6 氫 + 1 氧'],['分子量','46'],['常溫狀態','液體']],
+ note:'消毒酒精與酒類的主角。分子一端有 –OH（羥基），能和水互相吸引，所以酒精可以和水完全互溶。'},
+
+Object.assign(nacl(4,2.82),{id:'nacl',g:'B',name:'氯化鈉（食鹽）',short:'NaCl',formula:'NaCl',badge:'離子化合物 · 晶體',
+ ballScale:0.78,bondR:0.05,radii:{Na:1.16,Cl:1.67},
+ facts:[['分類','化合物'],['式量','58.5'],['排列','立方晶體'],['鍵結','離子鍵'],['每個離子鄰居數','6 個']],
+ note:'食鹽裡並沒有「一個 NaCl 分子」。鈉離子和氯離子一正一負互相吸引，一顆接一顆整齊地排成立方體。切開來看，每個鈉離子周圍都恰好有 6 個氯離子。'}),
+Object.assign(diamond(),{id:'diamond',g:'B',name:'鑽石',short:'C',formula:'C',badge:'碳的同素異形體',
+ ballScale:0.8,bondR:0.075,sf:0.82,
+ facts:[['分類','元素（純碳）'],['排列','立體網狀'],['每個碳鄰居數','4 個'],['鍵角','109.5°'],['性質','極硬、不導電']],
+ note:'鑽石是純碳。每個碳原子牢牢抓住四個鄰居，向四面八方延伸成一整塊立體的網，沒有任何地方可以滑動，所以是天然物質中最硬的。邊緣看起來斷掉的鍵，是因為這裡只切出一小塊。'}),
+Object.assign(graphite(),{id:'graphite',g:'B',name:'石墨',short:'C',formula:'C',badge:'碳的同素異形體',
+ ballScale:0.8,bondR:0.075,sf:0.82,
+ facts:[['分類','元素（純碳）'],['排列','層狀六角形'],['層內鄰居數','3 個'],['層間距離','3.35 Å'],['性質','軟、可導電']],
+ note:'和鑽石一樣是純碳，差別只在排列方式，這就是「同素異形體」。層內的碳連得很牢，層與層之間卻只是輕輕靠著，一滑就分開——所以鉛筆能寫字、石墨可當潤滑劑。轉到側面最容易看出一層一層的構造。'}),
+Object.assign(fccMetal('Cu',3.61),{id:'cu',g:'B',name:'銅（金屬晶體）',short:'Cu',formula:'Cu',badge:'金屬鍵 · 晶體',
+ ballScale:0.85,bondR:0.05,radii:{Cu:1.28},
+ facts:[['分類','元素（純物質）'],['排列','面心立方堆積'],['鍵結','金屬鍵'],['性質','導電、延展性佳']],
+ note:'金屬原子像水果攤上的橘子一樣一層層緊密堆疊，外層電子則能在整塊金屬中自由移動。可以自由移動的電子讓金屬導電、導熱，原子層之間又能滑動，所以金屬可以拉成線、打成薄片。'})
+];
+
+/* 置中 */
+MOL.forEach(s=>{
+  let cx=0,cy=0,cz=0;s.atoms.forEach(a=>{cx+=a[1];cy+=a[2];cz+=a[3];});
+  const n=s.atoms.length;cx/=n;cy/=n;cz/=n;
+  s.atoms.forEach(a=>{a[1]-=cx;a[2]-=cy;a[3]-=cz;});
+  s.ballScale=s.ballScale||1;s.bondR=s.bondR||0.095;s.sf=s.sf||1;s.radii=s.radii||{};
+});
+
+/* ==================== 顏色工具 ==================== */
+const BG=[7,20,26];
+const hex2rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const fogMix=(c,t)=>[c[0]+(BG[0]-c[0])*t,c[1]+(BG[1]-c[1])*t,c[2]+(BG[2]-c[2])*t];
+const shade=(c,f)=>{const t=f>0?255:0,k=Math.abs(f);return`rgb(${c.map(v=>Math.round(v+(t-v)*k)).join(',')})`;};
+const rgbS=c=>`rgb(${c.map(v=>Math.round(v)).join(',')})`;
+const lum=c=>(0.2126*c[0]+0.7152*c[1]+0.0722*c[2])/255;
+const PROTON=hex2rgb('#ff6a53'), NEUTRON=hex2rgb('#8fa3ad'), ELECTRON=hex2rgb('#63d9e0');
+
+/* ==================== 狀態 ==================== */
+const cv=document.getElementById('view'),ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const S={view:'element',elSym:'Na',molIdx:4,mnemo:null,layout:'full',mode:'ball',labels:true,spin:!reduce,
+         speed:0.34,zoomUI:1,yaw:0.6,pitch:-0.3,dist:10,focal:900,t:0};
+const $=id=>document.getElementById(id);
+const curMol=()=>MOL[S.molIdx];
+
+/* 原子核座標（決定性亂數） */
+const nucCache={};
+function nucleus(sym){
+  if(nucCache[sym])return nucCache[sym];
+  const el=EL[sym],N=el.a,P=el.z;
+  let seed=el.z*2654435761>>>0;
+  const rnd=()=>{seed=(seed+0x6D2B79F5)>>>0;let t=seed;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
+  const nr=0.42/Math.max(1,Math.cbrt(N))*1.15;
+  const R=Math.max(nr*Math.cbrt(N)*1.25-nr*0.6,0.001);
+  const pts=[];
+  for(let i=0;i<N;i++){
+    let x,y,z;do{x=rnd()*2-1;y=rnd()*2-1;z=rnd()*2-1;}while(x*x+y*y+z*z>1);
+    pts.push({x:x*R,y:y*R,z:z*R,p:i<P});
+  }
+  // 質子/中子交錯排列，看起來比較均勻
+  for(let i=pts.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const a=pts[i].p;pts[i].p=pts[j].p;pts[j].p=a;}
+  let assigned=0;pts.forEach(q=>{if(q.p)assigned++;});
+  let diff=P-assigned,i=0;
+  while(diff!==0&&i<pts.length){if(diff>0&&!pts[i].p){pts[i].p=true;diff--;}else if(diff<0&&pts[i].p){pts[i].p=false;diff++;}i++;}
+  return nucCache[sym]={pts,nr};
+}
+const shellR=k=>1.35+0.78*k;
+
+/* ==================== 版面 ==================== */
+function fit(){
+  let r;
+  if(S.view==='element'){
+    const el=EL[S.elSym];r=shellR(el.shells.length-1)+0.45;
+  }else{
+    const st=curMol();r=0;
+    st.atoms.forEach(a=>{const d=Math.hypot(a[1],a[2],a[3])+dispR(a[0],st);if(d>r)r=d;});
+  }
+  S.focal=1.2*Math.min(W,H||1);
+  S.dist=3.0*r/S.zoomUI;
+}
+function dispR(sym,st){
+  if(st.radii&&st.radii[sym])return S.mode==='fill'?st.radii[sym]:(0.30+(EL[sym].cov-0.31)*0.22)*st.ballScale;
+  return S.mode==='fill'?EL[sym].vdw*st.sf:(0.30+(EL[sym].cov-0.31)*0.22)*st.ballScale;
+}
+function resize(){
+  DPR=Math.min(devicePixelRatio||1,2);
+  const b=cv.parentElement.getBoundingClientRect();
+  W=Math.max(1,Math.round(b.width));H=Math.max(1,Math.round(b.height));
+  cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);fit();
+}
+new ResizeObserver(resize).observe(document.querySelector('.stage'));
+
+/* ==================== 繪圖 ==================== */
+function rot(x,y,z){
+  const cy=Math.cos(S.yaw),sy=Math.sin(S.yaw),cp=Math.cos(S.pitch),sp=Math.sin(S.pitch);
+  const x1=x*cy+z*sy, z1=-x*sy+z*cy;
+  return{x:x1,y:y*cp-z1*sp,z:y*sp+z1*cp};
+}
+function buildMolecule(){
+  const st=curMol(),items=[];
+  const P=st.atoms.map(a=>{const p=rot(a[1],a[2],a[3]);p.sym=a[0];return p;});
+  if(S.mode!=='fill'){
+    const SEG=14;
+    st.bonds.forEach(b=>{
+      const A=P[b[0]],B=P[b[1]];
+      const offs=b[2]===3?[-0.17,0,0.17]:b[2]===2?[-0.135,0.135]:[0];
+      let ox=0,oy=0;
+      if(b[2]>1){const dx=B.x-A.x,dy=B.y-A.y,L=Math.hypot(dx,dy)||1;ox=-dy/L;oy=dx/L;}
+      offs.forEach(o=>{for(let s=0;s<SEG;s++){
+        const t0=s/SEG,t1=(s+1)/SEG,tm=(t0+t1)/2,near=tm<0.5?A:B;
+        items.push({k:'k',x0:A.x+(B.x-A.x)*t0+ox*o,y0:A.y+(B.y-A.y)*t0+oy*o,z0:A.z+(B.z-A.z)*t0,
+          x1:A.x+(B.x-A.x)*t1+ox*o,y1:A.y+(B.y-A.y)*t1+oy*o,z1:A.z+(B.z-A.z)*t1,
+          z:A.z+(B.z-A.z)*tm,r:st.bondR,col:hex2rgb(EL[near.sym].color)});
+      }});
+    });
+  }
+  P.forEach(p=>items.push({k:'s',x:p.x,y:p.y,z:p.z,r:dispR(p.sym,st),
+    col:hex2rgb(EL[p.sym].color),text:S.labels?p.sym:''}));
+  return items;
+}
+function buildAtom(){
+  const sym=S.elSym,el=EL[sym],items=[];
+  const nuc=nucleus(sym);
+  nuc.pts.forEach(q=>{const p=rot(q.x,q.y,q.z);
+    items.push({k:'s',x:p.x,y:p.y,z:p.z,r:nuc.nr,col:q.p?PROTON:NEUTRON});});
+  el.shells.forEach((cnt,k)=>{
+    const R=shellR(k),tx=0.28+k*0.44,ty=k*0.72;
+    const ct=Math.cos(tx),stx=Math.sin(tx),cy2=Math.cos(ty),sy2=Math.sin(ty);
+    const at=a=>{ // 環上參數 a → 世界座標
+      let x=R*Math.cos(a),y=R*Math.sin(a),z=0;
+      let y2=y*ct-z*stx, z2=y*stx+z*ct;
+      return[x*cy2+z2*sy2, y2, -x*sy2+z2*cy2];
+    };
+    const N=52;
+    for(let i=0;i<N;i++){
+      const a0=i/N*6.2832,a1=(i+1)/N*6.2832;
+      const q0=at(a0),q1=at(a1),p0=rot(q0[0],q0[1],q0[2]),p1=rot(q1[0],q1[1],q1[2]);
+      items.push({k:'k',x0:p0.x,y0:p0.y,z0:p0.z,x1:p1.x,y1:p1.y,z1:p1.z,
+        z:(p0.z+p1.z)/2,r:0.012,col:[70,110,124],alpha:.85});
+    }
+    const w=0.55/(k*0.55+1);
+    for(let e=0;e<cnt;e++){
+      const a=S.t*w+e/cnt*6.2832;
+      const q=at(a),p=rot(q[0],q[1],q[2]);
+      items.push({k:'s',x:p.x,y:p.y,z:p.z,r:0.105,col:ELECTRON,glow:1});
+    }
+    if(S.labels){
+      const q=at(-0.35),p=rot(q[0]*1.09,q[1]*1.09,q[2]*1.09);
+      items.push({k:'t',x:p.x,y:p.y,z:p.z,text:String(cnt),col:[130,190,205]});
+    }
+  });
+  return items;
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const items=S.view==='element'?buildAtom():buildMolecule();
+  let zmin=Infinity,zmax=-Infinity;
+  items.forEach(it=>{const z=it.z;if(z<zmin)zmin=z;if(z>zmax)zmax=z;});
+  const span=Math.max(zmax-zmin,.001);
+  items.sort((a,b)=>a.z-b.z);
+
+  for(const it of items){
+    const zc=S.dist-it.z; if(zc<0.4) continue;
+    const k=S.focal/zc, fog=Math.min(Math.max((zmax-it.z)/span,0),1)*0.5;
+    const base=fogMix(it.col,fog);
+
+    if(it.k==='k'){
+      const z0=S.dist-it.z0,z1=S.dist-it.z1; if(z0<0.4||z1<0.4)continue;
+      const k0=S.focal/z0,k1=S.focal/z1;
+      ctx.globalAlpha=it.alpha||1;
+      ctx.strokeStyle=shade(base,-0.15);
+      ctx.lineWidth=Math.max(0.8,2*it.r*k);ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(W/2+it.x0*k0,H/2-it.y0*k0);ctx.lineTo(W/2+it.x1*k1,H/2-it.y1*k1);ctx.stroke();
+      ctx.globalAlpha=1;continue;
+    }
+    const px=W/2+it.x*k, py=H/2-it.y*k;
+    if(it.k==='t'){
+      ctx.font='700 13px '+'ui-monospace,SFMono-Regular,Menlo,monospace';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle=rgbS(base);ctx.fillText(it.text,px,py);continue;
+    }
+    const pr=it.r*k; if(pr<0.4)continue;
+    if(it.glow){
+      const gg=ctx.createRadialGradient(px,py,0,px,py,pr*3.4);
+      gg.addColorStop(0,'rgba(99,217,224,.34)');gg.addColorStop(1,'rgba(99,217,224,0)');
+      ctx.fillStyle=gg;ctx.beginPath();ctx.arc(px,py,pr*3.4,0,6.2832);ctx.fill();
+    }
+    const g=ctx.createRadialGradient(px-pr*.36,py-pr*.42,pr*.04,px,py,pr*1.02);
+    g.addColorStop(0,shade(base,.62));g.addColorStop(.42,rgbS(base));g.addColorStop(1,shade(base,-.6));
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(px,py,pr,0,6.2832);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=Math.max(.5,pr*.05);ctx.stroke();
+
+    if(it.text&&pr>8){
+      const fs=Math.min(Math.max(pr*.8,10),26);
+      ctx.font=`700 ${fs}px ui-monospace,SFMono-Regular,Menlo,monospace`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillStyle=lum(base)>.6?'rgba(8,18,24,.85)':'rgba(255,255,255,.94)';
+      ctx.fillText(it.text,px,py+fs*.04);
+    }
+  }
+}
+let last=performance.now();
+function loop(now){
+  const dt=Math.min((now-last)/1000,.05);last=now;
+  if(S.spin&&!drag.on)S.yaw+=S.speed*dt;
+  S.t+=dt*(S.spin?1:0.35);
+  draw();requestAnimationFrame(loop);
+}
+
+/* ==================== 互動 ==================== */
+const drag={on:false,x:0,y:0,pts:new Map(),pinch:0};
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);
+  drag.pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(drag.pts.size===1){drag.on=true;drag.x=e.clientX;drag.y=e.clientY;}
+  if(drag.pts.size===2){const p=[...drag.pts.values()];drag.pinch=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}});
+cv.addEventListener('pointermove',e=>{
+  if(!drag.pts.has(e.pointerId))return;
+  drag.pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(drag.pts.size===2){const p=[...drag.pts.values()],d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+    if(drag.pinch)setZoom(S.zoomUI*(d/drag.pinch));drag.pinch=d;return;}
+  if(!drag.on)return;
+  S.yaw+=(e.clientX-drag.x)*.008;
+  S.pitch=Math.max(-1.5,Math.min(1.5,S.pitch+(e.clientY-drag.y)*.008));
+  drag.x=e.clientX;drag.y=e.clientY;});
+const endPt=e=>{drag.pts.delete(e.pointerId);if(drag.pts.size<2)drag.pinch=0;if(!drag.pts.size)drag.on=false;};
+cv.addEventListener('pointerup',endPt);cv.addEventListener('pointercancel',endPt);
+cv.addEventListener('wheel',e=>{e.preventDefault();setZoom(S.zoomUI*(e.deltaY<0?1.09:.917));},{passive:false});
+cv.addEventListener('keydown',e=>{const k=e.key;
+  if(k==='ArrowLeft')S.yaw-=.1;else if(k==='ArrowRight')S.yaw+=.1;
+  else if(k==='ArrowUp')S.pitch=Math.max(-1.5,S.pitch-.1);
+  else if(k==='ArrowDown')S.pitch=Math.min(1.5,S.pitch+.1);
+  else if(k==='+'||k==='=')setZoom(S.zoomUI*1.1);else if(k==='-')setZoom(S.zoomUI/1.1);else return;
+  e.preventDefault();});
+function setZoom(z){S.zoomUI=Math.max(.6,Math.min(2.2,z));$('zoom').value=Math.round(S.zoomUI*100);fit();readout();}
+
+/* ==================== 介面 ==================== */
+const GA={1:'1A',2:'2A',13:'3A',14:'4A',15:'5A',16:'6A',17:'7A',18:'8A'};
+const CCOL={1:1,2:2,13:3,14:4,15:5,16:6,17:7,18:8};
+function makeEl(sym){
+  const e=EL[sym],b=document.createElement('button');
+  b.className='el'+(e.synth?' synth':'');b.type='button';b.dataset.cat=e.cat;b.dataset.sym=sym;
+  b.setAttribute('aria-pressed',sym===S.elSym);
+  b.innerHTML=`<span class="z">${e.z}</span><span class="s">${sym}</span><span class="n">${e.zh.charAt(0)}</span>`;
+  b.onclick=()=>pickEl(sym);
+  return b;
+}
+function buildTable(){
+  const compact=S.layout==='compact';
+  $('pwrap').className='pwrap '+(compact?'compact':'full');
+  const hd=$('phead'),g=$('ptable'),tm=$('tmrow');
+  hd.innerHTML='';g.innerHTML='';tm.innerHTML='';
+  $('tmwrap').classList.toggle('hide',!compact);
+  $('layoutBtn').textContent=compact?'切換為完整週期表':'切換為主族排列';
+
+  const cols=compact?8:18;
+  for(let c=1;c<=cols;c++){
+    const real=compact?Object.keys(CCOL).find(k=>CCOL[k]===c):c;
+    const d=document.createElement('div');
+    d.className='gcol'+(GA[real]?' main':'');d.textContent=GA[real]||c;
+    d.style.gridColumn=c;d.style.gridRow=1;hd.appendChild(d);
+  }
+  if(compact){
+    slot(g,1,1);slot(g,8,1);
+    for(let r=2;r<=7;r++)for(let c=1;c<=8;c++)slot(g,c,r);
+  }else{
+    tableSlots().forEach(([c,r])=>slot(g,c,r));
+  }
+  EL_ORDER.forEach(sym=>{
+    const e=EL[sym],b=makeEl(sym);
+    if(compact&&!GA[e.col]){tm.appendChild(b);return;}
+    b.style.gridColumn=compact?CCOL[e.col]:e.col;
+    b.style.gridRow=e.row;
+    g.appendChild(b);
+  });
+}
+function slot(g,c,r){const d=document.createElement('div');d.className='cell';
+  d.style.gridColumn=c;d.style.gridRow=r;g.appendChild(d);}
+function buildChips(){
+  const mk=(list,host)=>{host.innerHTML='';list.forEach(s=>{
+    const b=document.createElement('button');b.className='chip';b.type='button';b.dataset.id=s.id;
+    b.setAttribute('aria-pressed',MOL.indexOf(s)===S.molIdx);
+    b.innerHTML=`${s.name} <small>${s.short}</small>`;
+    b.onclick=()=>pickMol(MOL.indexOf(s));host.appendChild(b);});};
+  const a=$('chipsA'),b=$('chipsB');
+  a.innerHTML='';b.innerHTML='';
+  const l1=document.createElement('span');l1.className='lab';l1.textContent='分子';a.appendChild(l1);
+  const l2=document.createElement('span');l2.className='lab';l2.textContent='晶體';b.appendChild(l2);
+  const tmpA=document.createElement('div'),tmpB=document.createElement('div');
+  mk(MOL.filter(s=>s.g==='A'),tmpA);mk(MOL.filter(s=>s.g==='B'),tmpB);
+  [...tmpA.children].forEach(c=>a.appendChild(c));
+  [...tmpB.children].forEach(c=>b.appendChild(c));
+}
+function buildMnemo(){
+  const host=$('mnemo');host.innerHTML='';
+  const row=(labText,list,withAll)=>{
+    const r=document.createElement('div');r.className='mnemo';
+    const lab=document.createElement('span');lab.className='lab';lab.textContent=labText;r.appendChild(lab);
+    if(withAll){
+      const all=document.createElement('button');
+      all.className='mbtn';all.type='button';all.dataset.mid='';all.textContent='全部';
+      all.setAttribute('aria-pressed',!S.mnemo);all.onclick=()=>pickMnemo(null);r.appendChild(all);
+    }
+    list.forEach(m=>{
+      const b=document.createElement('button');
+      b.className='mbtn';b.type='button';b.dataset.mid=m.id;b.textContent=m.title;
+      b.setAttribute('aria-pressed',S.mnemo===m.id);
+      b.onclick=()=>pickMnemo(m.id);r.appendChild(b);
+    });
+    host.appendChild(r);
+  };
+  row('主族',FAMILY,true);
+  row('口訣',MNEMO,false);
+}
+function pickMnemo(id){
+  S.mnemo=id;
+  document.querySelectorAll('.mbtn').forEach(b=>b.setAttribute('aria-pressed',(b.dataset.mid||null)===id));
+  const m=SETS.find(x=>x.id===id);
+  $('mband').classList.toggle('hide',!m);
+  document.querySelectorAll('.el').forEach(b=>b.classList.toggle('dim',!!m&&!m.seq.includes(b.dataset.sym)));
+  if(!m)return;
+  $('mSay').textContent=m.text;$('mNote').textContent=m.note;
+  const bar=$('mSeq');bar.innerHTML='';
+  m.seq.forEach((sym,i)=>{
+    const e=EL[sym],b=document.createElement('button');
+    b.className='seq';b.type='button';b.dataset.sym=sym;
+    b.setAttribute('aria-current',sym===S.elSym);
+    b.innerHTML=`<span class="o">${i+1}</span><span class="c">${e.zh.charAt(0)}</span><span class="y">${sym}</span>`;
+    b.onclick=()=>pickEl(sym);bar.appendChild(b);
+  });
+  if(!m.seq.includes(S.elSym))pickEl(m.seq[0]);
+}
+function pickEl(sym){S.elSym=sym;S.view='element';S.yaw=.6;S.pitch=-.3;
+  document.querySelectorAll('.el').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sym===sym));
+  document.querySelectorAll('.seq').forEach(b=>{
+    b.setAttribute('aria-current',b.dataset.sym===sym);
+    if(b.dataset.sym===sym)b.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+  });
+  fit();panel();}
+function pickMol(i){S.molIdx=i;S.view='structure';S.yaw=.6;S.pitch=-.3;
+  document.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed',b.dataset.id===MOL[i].id));
+  fit();panel();}
+
+function panel(){
+  const isEl=S.view==='element';
+  $('modeGroup').classList.toggle('hide',isEl);
+  if(isEl){
+    const e=EL[S.elSym];
+    $('tName').textContent=e.zh;$('tFormula').textContent=S.elSym;
+    $('tBadge').textContent=e.cat+' · '+e.state+(e.synth?' · 人工合成':'');
+    $('tag').textContent=S.elSym+' · 原子模型';
+    $('tFacts').innerHTML=[
+      ['原子序（質子數）',e.z],['質量數',e.a],['中子數',e.a-e.z],['電子數',e.z],
+      ['電子排列',e.shells.join(' , ')]
+    ].map(f=>`<dt>${f[0]}</dt><dd>${f[1]}</dd>`).join('');
+    $('tNote').textContent=e.use+'　（圖為波耳模型：電子畫成一層一層的軌道，方便理解。真實原子的原子核只有整顆原子的約十萬分之一大，這裡放大了很多倍。）';
+    $('legend').innerHTML=[
+      ['#ff6a53','質子','帶正電，數量＝原子序'],
+      ['#8fa3ad','中子','不帶電，位於原子核'],
+      ['#63d9e0','電子','帶負電，分層繞著原子核']
+    ].map(r=>`<div class="lrow"><span class="sw" style="background:${r[0]}"></span>
+      <span class="sy">${r[1]}</span><span class="nm">${r[2]}</span></div>`).join('');
+  }else{
+    const st=curMol();
+    $('tName').textContent=st.name;$('tFormula').textContent=st.formula;
+    $('tBadge').textContent=st.badge;$('tag').textContent=st.formula;
+    $('tFacts').innerHTML=st.facts.map(f=>`<dt>${f[0]}</dt><dd>${f[1]}</dd>`).join('');
+    $('tNote').textContent=st.note;
+    const syms=[...new Set(st.atoms.map(a=>a[0]))];
+    $('legend').innerHTML=syms.map(s=>`<div class="lrow"><span class="sw" style="background:${EL[s].color}"></span>
+      <span class="sy">${s}</span><span class="nm">${EL[s].zh}</span></div>`).join('');
+  }
+  readout();
+}
+function readout(){
+  if(S.view==='element'){
+    const e=EL[S.elSym];
+    $('readout').innerHTML=`原子核：質子 <b>${e.z}</b>　中子 <b>${e.a-e.z}</b><br>電子 <b>${e.z}</b>　分 <b>${e.shells.length}</b> 層　視野 <b>${(S.zoomUI*100).toFixed(0)}%</b>`;
+  }else{
+    const st=curMol();
+    $('readout').innerHTML=`原子 <b>${st.atoms.length}</b>　鍵結 <b>${st.bonds.length}</b><br>模式 <b>${S.mode==='ball'?'球棍':'實體'}</b>　視野 <b>${(S.zoomUI*100).toFixed(0)}%</b>`;
+  }
+}
+function setTab(el){
+  S.view=el?'element':'structure';
+  $('tabEl').setAttribute('aria-selected',el);$('tabMol').setAttribute('aria-selected',!el);
+  $('pickEl').classList.toggle('hide',!el);$('pickMol').classList.toggle('hide',el);
+  fit();panel();
+}
+$('tabEl').onclick=()=>setTab(true);
+$('tabMol').onclick=()=>setTab(false);
+document.querySelectorAll('[data-mode]').forEach(b=>{b.onclick=()=>{S.mode=b.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));fit();readout();};});
+$('btnLabel').onclick=e=>{S.labels=!S.labels;e.currentTarget.setAttribute('aria-pressed',S.labels);};
+$('btnSpin').onclick=e=>{S.spin=!S.spin;e.currentTarget.setAttribute('aria-pressed',S.spin);};
+$('speed').oninput=e=>{S.speed=e.target.value/100;};
+$('zoom').oninput=e=>setZoom(e.target.value/100);
+$('layoutBtn').onclick=()=>{S.layout=S.layout==='compact'?'full':'compact';buildTable();pickMnemo(S.mnemo);};
+$('reset').onclick=()=>{S.yaw=.6;S.pitch=-.3;setZoom(1);};
+
+buildTable();buildMnemo();buildChips();resize();panel();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
