@@ -38,6 +38,10 @@
   .phead,.ptable{display:grid;gap:var(--gap);justify-content:center;align-content:start}
   .phead{grid-template-rows:14px;margin-bottom:4px}
   .ptable{grid-template-rows:repeat(7,var(--cell))}
+  /* 完整週期表多一條註腳列放錒系，中間留一道空隙與主表格分開 */
+  .pwrap.full .ptable{grid-template-rows:repeat(7,var(--cell)) 13px var(--cell)}
+  .fnlab{grid-row:9;grid-column:1/6;align-self:center;justify-self:end;
+    font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);padding-right:6px}
   .pwrap.full .phead,.pwrap.full .ptable{grid-template-columns:repeat(18,var(--cell));
     min-width:calc(18 * (var(--cell) + var(--gap)))}
   .pwrap.compact .phead,.pwrap.compact .ptable{grid-template-columns:repeat(8,var(--cell))}
@@ -236,7 +240,7 @@
         <div class="ptable" id="ptable"></div>
       </div>
       <div class="tmwrap hide" id="tmwrap">
-        <span class="lab" id="tmlab">常見過渡元素</span>
+        <span class="lab">常見過渡元素與錒系</span>
         <div class="tmrow" id="tmrow"></div>
       </div>
       <div class="mband hide" id="mband">
@@ -343,8 +347,12 @@ const EL = {
      use:'活潑金屬，也是人體神經傳導必需的礦物質。'},
  Ca:{zh:'鈣',z:20,a:40,shells:[2,8,8,2],cat:'金屬',state:'固體',col:2,row:4,color:'#5dff3d',cov:1.76,vdw:2.31,
      use:'骨骼與牙齒的主成分；石灰石、貝殼也含鈣。'},
+ Sc:{zh:'鈧',z:21,a:45,shells:[2,8,9,2],cat:'金屬',state:'固體',col:3,row:4,color:'#e6e6e6',cov:1.70,vdw:2.11,
+     use:'鋁裡只要加一點點鈧就會變得又輕又強韌，用於高階自行車車架；也用在很亮的金屬鹵素燈。'},
  Ti:{zh:'鈦',z:22,a:48,shells:[2,8,10,2],cat:'金屬',state:'固體',col:4,row:4,color:'#bfc2c7',cov:1.60,vdw:2.15,
      use:'又輕又強韌，而且幾乎不生鏽，用來做人工關節、眼鏡框與高階自行車車架。'},
+ V :{zh:'釩',z:23,a:51,shells:[2,8,11,2],cat:'金屬',state:'固體',col:5,row:4,color:'#a6a6ab',cov:1.53,vdw:2.07,
+     use:'加進鋼裡做成的釩鋼又硬又有韌性，是扳手、彈簧與工具鋼的材料。'},
  Cr:{zh:'鉻',z:24,a:52,shells:[2,8,13,1],cat:'金屬',state:'固體',col:6,row:4,color:'#8a99c7',cov:1.39,vdw:2.06,
      use:'鍍在金屬表面又亮又防鏽。不鏽鋼就是鐵加了鉻，表面會生成緻密的氧化層擋住裡面。'},
  Mn:{zh:'錳',z:25,a:55,shells:[2,8,13,2],cat:'金屬',state:'固體',col:7,row:4,color:'#9c7ac7',cov:1.39,vdw:2.05,
@@ -419,8 +427,8 @@ const EL = {
      use:'少見的無毒重金屬，是部分胃藥的成分；結晶會呈現彩虹色的階梯狀。'},
  Po:{zh:'釙',z:84,a:209,shells:[2,8,18,32,18,6],cat:'類金屬',state:'固體',col:16,row:6,color:'#c46a00',cov:1.40,vdw:1.97,
      use:'具強放射性，由居禮夫人發現，以她的故鄉波蘭命名。'},
- /* --- 錒系（不在主表格，另列於表下） --- */
- U :{zh:'鈾',z:92,a:238,shells:[2,8,18,32,21,9,2],cat:'金屬',state:'固體',fblock:1,row:7,color:'#008fff',cov:1.96,vdw:2.17,
+ /* --- 錒系：依課本慣例畫在主表格下方的註腳列（第 9 列），col 6 是鈾在錒系中的位置 --- */
+ U :{zh:'鈾',z:92,a:238,shells:[2,8,18,32,21,9,2],cat:'金屬',state:'固體',fblock:1,col:6,row:9,color:'#008fff',cov:1.96,vdw:2.17,
      use:'核能發電的燃料。鈾-235 的原子核被中子撞到會分裂成較小的原子核，同時放出大量能量。具放射性。'}
 };
 
@@ -821,19 +829,22 @@ function buildTable(){
   }else{
     tableSlots().forEach(([c,r])=>slot(g,c,r));
   }
-  /* 主表格放不下的：過渡元素（僅主族排列時）與錒系，一律另列於表下 */
+  /* 主族排列時，非主族的元素放不進 8 欄格線，改列在表格下方 */
   const extra=[];
   EL_ORDER.forEach(sym=>{
     const e=EL[sym];
-    if(e.fblock||(compact&&!GA[e.col])){extra.push(sym);return;}
+    if(compact&&!GA[e.col]){extra.push(sym);return;}
     const b=makeEl(sym);
     b.style.gridColumn=compact?CCOL[e.col]:e.col;
     b.style.gridRow=e.row;
     g.appendChild(b);
   });
+  if(!compact&&EL_ORDER.some(s=>EL[s].fblock)){
+    const lab=document.createElement('span');lab.className='fnlab';lab.textContent='錒系';
+    g.appendChild(lab);
+  }
   extra.sort((x,y)=>EL[x].z-EL[y].z).forEach(sym=>tm.appendChild(makeEl(sym)));
   $('tmwrap').classList.toggle('hide',!extra.length);
-  $('tmlab').textContent=compact?'常見過渡元素與錒系':'錒系（鑭系與錒系另列於表下）';
 }
 function slot(g,c,r){const d=document.createElement('div');d.className='cell';
   d.style.gridColumn=c;d.style.gridRow=r;g.appendChild(d);}
