@@ -59,6 +59,7 @@
     height:14px;line-height:14px;align-self:end;overflow:hidden}
   .gcol.ga{color:var(--accent);font-weight:700;font-size:10px;letter-spacing:.04em}
   .el{position:relative;align-self:start}
+  .el.rad::after{content:'';position:absolute;top:4px;right:4px;width:4px;height:4px;border-radius:50%;background:#e0705a}
   .cell{width:var(--cell);height:var(--cell);border-radius:7px;border:1px dashed rgba(255,255,255,.05)}
   .el{appearance:none;cursor:pointer;padding:2px;border-radius:7px;border:1px solid var(--line);
     background:var(--panel-2);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -253,6 +254,7 @@
         <span><i style="background:var(--nonmetal)"></i>非金屬</span>
         <span><i style="background:var(--semi)"></i>類金屬</span>
         <span><i style="background:var(--noble)"></i>惰性氣體（鈍氣）</span>
+        <span style="color:#3f606d">右上小點＝放射性元素</span>
         <button class="layoutbtn" id="layoutBtn" type="button"></button>
       </div>
     </div>
@@ -398,13 +400,13 @@ const EL = {
      use:'熔點最高的金屬（約 3400°C），所以早期燈泡裡通電後發光發熱的燈絲就是鎢絲。'},
  Pt:{zh:'鉑（白金）',z:78,a:195,shells:[2,8,18,32,17,1],cat:'金屬',state:'固體',col:10,row:6,color:'#d5d5e2',cov:1.36,vdw:1.75,
      use:'極不易反應，用於首飾，也是汽車觸媒轉換器的關鍵材料。'},
- At:{zh:'砈',z:85,a:210,shells:[2,8,18,32,18,7],cat:'非金屬',state:'固體',col:17,row:6,color:'#8c5a4a',cov:1.50,vdw:2.02,
+ At:{zh:'砈',z:85,a:210,shells:[2,8,18,32,18,7],rad:1,cat:'非金屬',state:'固體',col:17,row:6,color:'#8c5a4a',cov:1.50,vdw:2.02,
      use:'極稀有的放射性鹵素，整個地殼中同時存在的量不到一茶匙。'},
- Rn:{zh:'氡',z:86,a:222,shells:[2,8,18,32,18,8],cat:'惰性氣體',state:'氣體',col:18,row:6,color:'#428296',cov:1.50,vdw:2.20,
+ Rn:{zh:'氡',z:86,a:222,shells:[2,8,18,32,18,8],rad:1,cat:'惰性氣體',state:'氣體',col:18,row:6,color:'#428296',cov:1.50,vdw:2.20,
      use:'有放射性的惰性氣體，會從岩石與土壤中自然滲出。'},
- Fr:{zh:'鍅',z:87,a:223,shells:[2,8,18,32,18,8,1],cat:'金屬',state:'固體',col:1,row:7,color:'#5a2a80',cov:2.60,vdw:3.48,
+ Fr:{zh:'鍅',z:87,a:223,shells:[2,8,18,32,18,8,1],rad:1,cat:'金屬',state:'固體',col:1,row:7,color:'#5a2a80',cov:2.60,vdw:3.48,
      use:'放射性極強且存在時間極短，是自然界最稀有的元素之一。'},
- Ra:{zh:'鐳',z:88,a:226,shells:[2,8,18,32,18,8,2],cat:'金屬',state:'固體',col:2,row:7,color:'#00a000',cov:2.21,vdw:2.83,
+ Ra:{zh:'鐳',z:88,a:226,shells:[2,8,18,32,18,8,2],rad:1,cat:'金屬',state:'固體',col:2,row:7,color:'#00a000',cov:2.21,vdw:2.83,
      use:'具強放射性，由居禮夫人發現，早期曾被用在夜光塗料上。'},
  /* --- 補齊 3A~6A 主族 --- */
  Ga:{zh:'鎵',z:31,a:70,shells:[2,8,18,3],cat:'金屬',state:'固體',col:13,row:4,color:'#c28f8f',cov:1.22,vdw:1.87,
@@ -425,11 +427,11 @@ const EL = {
      use:'劇毒的重金屬，無色無味，過去曾被誤用為毒藥，現在受嚴格管制。'},
  Bi:{zh:'鉍',z:83,a:209,shells:[2,8,18,32,18,5],cat:'金屬',state:'固體',col:15,row:6,color:'#b05cc4',cov:1.48,vdw:2.07,
      use:'少見的無毒重金屬，是部分胃藥的成分；結晶會呈現彩虹色的階梯狀。'},
- Po:{zh:'釙',z:84,a:209,shells:[2,8,18,32,18,6],cat:'類金屬',state:'固體',col:16,row:6,color:'#c46a00',cov:1.40,vdw:1.97,
+ Po:{zh:'釙',z:84,a:209,shells:[2,8,18,32,18,6],rad:1,cat:'類金屬',state:'固體',col:16,row:6,color:'#c46a00',cov:1.40,vdw:1.97,
      use:'具強放射性，由居禮夫人發現，以她的故鄉波蘭命名。'},
  /* --- 錒系：依課本慣例畫在主表格下方的註腳列（第 9 列），col 6 是鈾在錒系中的位置 --- */
- U :{zh:'鈾',z:92,a:238,shells:[2,8,18,32,21,9,2],cat:'金屬',state:'固體',fblock:1,col:6,row:9,color:'#008fff',cov:1.96,vdw:2.17,
-     use:'核能發電的燃料。鈾-235 的原子核被中子撞到會分裂成較小的原子核，同時放出大量能量。具放射性。'}
+ U :{zh:'鈾',z:92,a:238,shells:[2,8,18,32,21,9,2],rad:1,cat:'金屬',state:'固體',fblock:1,col:6,row:9,color:'#008fff',cov:1.96,vdw:2.17,
+     use:'核能發電的燃料。鈾-235 的原子核被中子撞到會分裂成較小的原子核，同時放出大量能量。'}
 };
 
 /* ==================== 常用口訣 ==================== */
@@ -508,6 +510,12 @@ function graphite(){const atoms=[],A1=[2.46,0],A2=[1.23,2.13],B=[[0,0],[1.23,0.7
 function fccMetal(sym,a){const base=[[0,0,0],[0,.5,.5],[.5,0,.5],[.5,.5,0]],atoms=[];
   for(let i=0;i<2;i++)for(let j=0;j<2;j++)for(let k=0;k<2;k++)base.forEach(p=>atoms.push([sym,(i+p[0])*a,(j+p[1])*a,(k+p[2])*a]));
   return{atoms,bonds:autoBonds(atoms,a*0.75)};}
+/* 金紅石型：MnO₂（軟錳礦）。每個錳被 6 個氧圍成八面體，八面體再共邊連成長鏈 */
+function rutile(sym,a,c,u,nx,ny,nz){
+  const base=[[sym,0,0,0],[sym,.5,.5,.5],['O',u,u,0],['O',1-u,1-u,0],['O',.5+u,.5-u,.5],['O',.5-u,.5+u,.5]],atoms=[];
+  for(let i=0;i<nx;i++)for(let j=0;j<ny;j++)for(let k=0;k<nz;k++)base.forEach(p=>
+    atoms.push([p[0],(i+p[1])*a,(j+p[2])*a,(k+p[3])*c]));
+  return{atoms,bonds:autoBonds(atoms,2.05)};}
 
 
 const T4=1.09/Math.sqrt(3);
@@ -574,6 +582,10 @@ Object.assign(graphite(),{id:'graphite',g:'B',name:'石墨',short:'C',formula:'C
  ballScale:0.8,bondR:0.075,sf:0.82,
  facts:[['分類','元素（純碳）'],['排列','層狀六角形'],['層內鄰居數','3 個'],['層間距離','3.35 Å'],['性質','軟、可導電']],
  note:'和鑽石一樣是純碳，差別只在排列方式，這就是「同素異形體」。層內的碳連得很牢，層與層之間卻只是輕輕靠著，一滑就分開——所以鉛筆能寫字、石墨可當潤滑劑。轉到側面最容易看出一層一層的構造。'}),
+Object.assign(rutile('Mn',4.40,2.87,0.302,2,2,3),{id:'mno2',g:'B',name:'二氧化錳',short:'MnO₂',formula:'MnO₂',badge:'化合物 · 晶體',
+ ballScale:0.70,bondR:0.055,sf:0.9,radii:{Mn:0.90,O:1.35},
+ facts:[['分類','化合物'],['組成','1 個錳 + 2 個氧'],['式量','87'],['排列','立體網狀'],['每個錳鄰居數','6 個氧']],
+ note:'國中製氧實驗的主角。雙氧水自己分解得很慢，加入二氧化錳後立刻冒出大量氧氣，可是二氧化錳在反應前後既沒變少也沒變質——這就是催化劑：它只加快反應，自己不被消耗。它也不是一顆一顆的分子，而是錳和氧連成一整片網，每個錳被 6 個氧包在中間。'}),
 Object.assign(fccMetal('Cu',3.61),{id:'cu',g:'B',name:'銅（金屬晶體）',short:'Cu',formula:'Cu',badge:'金屬鍵 · 晶體',
  ballScale:0.85,bondR:0.05,radii:{Cu:1.28},
  facts:[['分類','元素（純物質）'],['排列','面心立方堆積'],['鍵結','金屬鍵'],['性質','導電、延展性佳']],
@@ -802,7 +814,7 @@ const GA={1:'1A',2:'2A',13:'3A',14:'4A',15:'5A',16:'6A',17:'7A',18:'8A'};
 const CCOL={1:1,2:2,13:3,14:4,15:5,16:6,17:7,18:8};
 function makeEl(sym){
   const e=EL[sym],b=document.createElement('button');
-  b.className='el';b.type='button';b.dataset.cat=e.cat;b.dataset.sym=sym;
+  b.className='el'+(e.rad?' rad':'');b.type='button';b.dataset.cat=e.cat;b.dataset.sym=sym;
   b.setAttribute('aria-pressed',sym===S.elSym);
   b.innerHTML=`<span class="z">${e.z}</span><span class="s">${sym}</span><span class="n">${e.zh.charAt(0)}</span>`;
   b.onclick=()=>pickEl(sym);
@@ -919,7 +931,7 @@ function panel(){
   if(isEl){
     const e=EL[S.elSym];
     $('tName').textContent=e.zh;$('tFormula').textContent=S.elSym;
-    $('tBadge').textContent=e.cat+' · '+e.state;
+    $('tBadge').textContent=e.cat+' · '+e.state+(e.rad?' · 放射性':'');
     $('tag').textContent=S.elSym+' · 原子模型';
     $('tFacts').innerHTML=[
       ['原子序（質子數）',e.z],['質量數',e.a],['中子數',e.a-e.z],['電子數',e.z],
