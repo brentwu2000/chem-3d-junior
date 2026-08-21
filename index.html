@@ -55,7 +55,6 @@
     height:14px;line-height:14px;align-self:end;overflow:hidden}
   .gcol.ga{color:var(--accent);font-weight:700;font-size:10px;letter-spacing:.04em}
   .el{position:relative;align-self:start}
-  .el.synth::after{content:'';position:absolute;top:4px;right:4px;width:4px;height:4px;border-radius:50%;background:#5c7a86}
   .cell{width:var(--cell);height:var(--cell);border-radius:7px;border:1px dashed rgba(255,255,255,.05)}
   .el{appearance:none;cursor:pointer;padding:2px;border-radius:7px;border:1px solid var(--line);
     background:var(--panel-2);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -237,7 +236,7 @@
         <div class="ptable" id="ptable"></div>
       </div>
       <div class="tmwrap hide" id="tmwrap">
-        <span class="lab">常見過渡元素</span>
+        <span class="lab" id="tmlab">常見過渡元素</span>
         <div class="tmrow" id="tmrow"></div>
       </div>
       <div class="mband hide" id="mband">
@@ -250,7 +249,6 @@
         <span><i style="background:var(--nonmetal)"></i>非金屬</span>
         <span><i style="background:var(--semi)"></i>類金屬</span>
         <span><i style="background:var(--noble)"></i>惰性氣體（鈍氣）</span>
-        <span style="color:#3f606d">右上小點＝人工合成元素</span>
         <button class="layoutbtn" id="layoutBtn" type="button"></button>
       </div>
     </div>
@@ -345,8 +343,18 @@ const EL = {
      use:'活潑金屬，也是人體神經傳導必需的礦物質。'},
  Ca:{zh:'鈣',z:20,a:40,shells:[2,8,8,2],cat:'金屬',state:'固體',col:2,row:4,color:'#5dff3d',cov:1.76,vdw:2.31,
      use:'骨骼與牙齒的主成分；石灰石、貝殼也含鈣。'},
+ Ti:{zh:'鈦',z:22,a:48,shells:[2,8,10,2],cat:'金屬',state:'固體',col:4,row:4,color:'#bfc2c7',cov:1.60,vdw:2.15,
+     use:'又輕又強韌，而且幾乎不生鏽，用來做人工關節、眼鏡框與高階自行車車架。'},
+ Cr:{zh:'鉻',z:24,a:52,shells:[2,8,13,1],cat:'金屬',state:'固體',col:6,row:4,color:'#8a99c7',cov:1.39,vdw:2.06,
+     use:'鍍在金屬表面又亮又防鏽。不鏽鋼就是鐵加了鉻，表面會生成緻密的氧化層擋住裡面。'},
+ Mn:{zh:'錳',z:25,a:55,shells:[2,8,13,2],cat:'金屬',state:'固體',col:7,row:4,color:'#9c7ac7',cov:1.39,vdw:2.05,
+     use:'二氧化錳是雙氧水分解製氧氣時的催化劑，也是乾電池裡的黑色粉末。'},
  Fe:{zh:'鐵',z:26,a:56,shells:[2,8,14,2],cat:'金屬',state:'固體',col:8,row:4,color:'#e06633',cov:1.32,vdw:2.04,
      use:'用量最大的金屬，是鋼鐵的主角，也在血紅素中負責運送氧。'},
+ Co:{zh:'鈷',z:27,a:59,shells:[2,8,15,2],cat:'金屬',state:'固體',col:9,row:4,color:'#f090a0',cov:1.26,vdw:2.00,
+     use:'有磁性，用來做強力磁鐵與鋰電池的正極；鈷的化合物呈現漂亮的藍色，是玻璃與陶瓷的顏料。'},
+ Ni:{zh:'鎳',z:28,a:59,shells:[2,8,16,2],cat:'金屬',state:'固體',col:10,row:4,color:'#50d050',cov:1.24,vdw:1.97,
+     use:'不鏽鋼與硬幣的成分之一，也用在可充電的鎳氫電池電極上。'},
  Cu:{zh:'銅',z:29,a:64,shells:[2,8,18,1],cat:'金屬',state:'固體',col:11,row:4,color:'#e08a3c',cov:1.32,vdw:1.40,
      use:'導電、導熱都很好，電線與硬幣常用。'},
  Zn:{zh:'鋅',z:30,a:65,shells:[2,8,18,2],cat:'金屬',state:'固體',col:12,row:4,color:'#8d90c0',cov:1.22,vdw:1.39,
@@ -378,6 +386,8 @@ const EL = {
      use:'最活潑的金屬之一。銫原子鐘定義了「1 秒」有多長。'},
  Ba:{zh:'鋇',z:56,a:137,shells:[2,8,18,18,8,2],cat:'金屬',state:'固體',col:2,row:6,color:'#00c900',cov:2.15,vdw:2.68,
      use:'硫酸鋇能擋 X 光，是照胃部前喝的顯影劑；燃燒呈綠色火焰。'},
+ W :{zh:'鎢',z:74,a:184,shells:[2,8,18,32,12,2],cat:'金屬',state:'固體',col:6,row:6,color:'#2194d6',cov:1.62,vdw:2.10,
+     use:'熔點最高的金屬（約 3400°C），所以早期燈泡裡通電後發光發熱的燈絲就是鎢絲。'},
  Pt:{zh:'鉑（白金）',z:78,a:195,shells:[2,8,18,32,17,1],cat:'金屬',state:'固體',col:10,row:6,color:'#d5d5e2',cov:1.36,vdw:1.75,
      use:'極不易反應，用於首飾，也是汽車觸媒轉換器的關鍵材料。'},
  At:{zh:'砈',z:85,a:210,shells:[2,8,18,32,18,7],cat:'非金屬',state:'固體',col:17,row:6,color:'#8c5a4a',cov:1.50,vdw:2.02,
@@ -409,19 +419,9 @@ const EL = {
      use:'少見的無毒重金屬，是部分胃藥的成分；結晶會呈現彩虹色的階梯狀。'},
  Po:{zh:'釙',z:84,a:209,shells:[2,8,18,32,18,6],cat:'類金屬',state:'固體',col:16,row:6,color:'#c46a00',cov:1.40,vdw:1.97,
      use:'具強放射性，由居禮夫人發現，以她的故鄉波蘭命名。'},
- /* --- 第 7 週期主族（人工合成） --- */
- Nh:{zh:'鉨',z:113,a:286,shells:[2,8,18,32,32,18,3],cat:'金屬',state:'未知',synth:1,col:13,row:7,color:'#8a7a99',cov:1.60,vdw:2.20,
-     use:'由日本理化學研究所合成並命名，是第一個由亞洲國家命名的元素。'},
- Fl:{zh:'鈇',z:114,a:289,shells:[2,8,18,32,32,18,4],cat:'金屬',state:'未知',synth:1,col:14,row:7,color:'#7a8a99',cov:1.60,vdw:2.20,
-     use:'人工合成，紀念俄國核物理學家弗列洛夫。'},
- Mc:{zh:'鏌',z:115,a:290,shells:[2,8,18,32,32,18,5],cat:'金屬',state:'未知',synth:1,col:15,row:7,color:'#997a8a',cov:1.60,vdw:2.20,
-     use:'人工合成，以進行研究的莫斯科州命名。'},
- Lv:{zh:'鉝',z:116,a:293,shells:[2,8,18,32,32,18,6],cat:'金屬',state:'未知',synth:1,col:16,row:7,color:'#998a7a',cov:1.60,vdw:2.20,
-     use:'人工合成，以美國利弗莫爾實驗室命名。'},
- Ts:{zh:'鿬',z:117,a:294,shells:[2,8,18,32,32,18,7],cat:'非金屬',state:'未知',synth:1,col:17,row:7,color:'#8a997a',cov:1.60,vdw:2.20,
-     use:'人工合成的鹵素族元素，以美國田納西州命名。'},
- Og:{zh:'鿫',z:118,a:294,shells:[2,8,18,32,32,18,8],cat:'惰性氣體',state:'未知',synth:1,col:18,row:7,color:'#7a9999',cov:1.60,vdw:2.20,
-     use:'目前原子序最大的元素。雖然排在惰性氣體族，但科學家推測它的性質可能和上面幾個很不一樣。'}
+ /* --- 錒系（不在主表格，另列於表下） --- */
+ U :{zh:'鈾',z:92,a:238,shells:[2,8,18,32,21,9,2],cat:'金屬',state:'固體',fblock:1,row:7,color:'#008fff',cov:1.96,vdw:2.17,
+     use:'核能發電的燃料。鈾-235 的原子核被中子撞到會分裂成較小的原子核，同時放出大量能量。具放射性。'}
 };
 
 /* ==================== 常用口訣 ==================== */
@@ -453,33 +453,34 @@ const FAMILY=[
  seq:['Be','Mg','Ca','Sr','Ba','Ra'],
  note:'活性比同一週期的 1A 稍弱。它們燃燒時各有代表色——鎂是白光、鈣是橘紅、鍶是鮮紅、鋇是綠色，煙火的顏色就是這樣調出來的。'},
 {id:'g3a',title:'3A',text:'硼族　最外層 3 個電子　→　常形成 +3 價離子',
- seq:['B','Al','Ga','In','Tl','Nh'],
+ seq:['B','Al','Ga','In','Tl'],
  note:'最上面的硼是類金屬，往下就都是金屬了。鋁是這一族最常見的元素，也是地殼中含量最多的金屬。'},
 {id:'g4a',title:'4A',text:'碳族　最外層 4 個電子　→　傾向共用電子，形成 4 個共價鍵',
- seq:['C','Si','Ge','Sn','Pb','Fl'],
+ seq:['C','Si','Ge','Sn','Pb'],
  note:'最外層剛好一半，要失去 4 個或得到 4 個都很吃力，所以偏好和別人「共用」電子。這一族由上到下從非金屬（碳）經類金屬（矽、鍺）變成金屬（錫、鉛），是最能看出「金屬性由上往下增強」的一族。'},
 {id:'g5a',title:'5A',text:'氮族　最外層 5 個電子　→　可得 3 個，形成 −3 價離子',
- seq:['N','P','As','Sb','Bi','Mc'],
+ seq:['N','P','As','Sb','Bi'],
  note:'氮佔了空氣的 78%，磷是骨骼與 DNA 的必要成分。再往下的砷、銻是類金屬，鉍則是金屬——同樣呈現由非金屬漸變為金屬的趨勢。'},
 {id:'g6a',title:'6A',text:'氧族　最外層 6 個電子　→　可得 2 個，形成 −2 價離子',
- seq:['O','S','Se','Te','Po','Lv'],
+ seq:['O','S','Se','Te','Po'],
  note:'只差 2 個電子就填滿，所以很會搶電子。氧和硫是課本中最常出現的兩個，它們與金屬結合就形成氧化物與硫化物。'},
 {id:'g7a',title:'7A',text:'鹵素　最外層 7 個電子　→　可得 1 個，形成 −1 價離子',
- seq:['F','Cl','Br','I','At','Ts'],
+ seq:['F','Cl','Br','I','At'],
  note:'只差 1 個電子就填滿，是最容易搶電子的一族，活性極強。常溫下的狀態由上往下規律變化：氟、氯是氣體，溴是液體，碘是固體。'},
 {id:'g8a',title:'8A',text:'惰性氣體　最外層已填滿　→　幾乎不形成離子',
- seq:['He','Ne','Ar','Kr','Xe','Rn','Og'],
+ seq:['He','Ne','Ar','Kr','Xe','Rn'],
  note:'最外層電子已經填滿（氦是 2 個，其餘都是 8 個），不必得也不必失電子，因此幾乎不與任何物質反應，在自然界都以單獨一個原子的形式存在。其他元素會反應，正是為了讓最外層變得像它們一樣滿。'}
 ];
 const SETS=[...FAMILY,...MNEMO];
 const EL_ORDER = Object.keys(EL);
 
-/* 週期表可能出現的位置（主族＋第 4~6 週期完整列） */
+/* 週期表可能出現的位置（主族＋第 4~6 週期完整列；第 7 週期國中只碰到 1A、2A） */
 function tableSlots(){
   const s=[];
   s.push([1,1],[18,1]);
   [2,3].forEach(r=>{ s.push([1,r],[2,r]); for(let c=13;c<=18;c++) s.push([c,r]); });
-  [4,5,6,7].forEach(r=>{ for(let c=1;c<=18;c++) s.push([c,r]); });
+  [4,5,6].forEach(r=>{ for(let c=1;c<=18;c++) s.push([c,r]); });
+  s.push([1,7],[2,7]);
   return s;
 }
 
@@ -793,7 +794,7 @@ const GA={1:'1A',2:'2A',13:'3A',14:'4A',15:'5A',16:'6A',17:'7A',18:'8A'};
 const CCOL={1:1,2:2,13:3,14:4,15:5,16:6,17:7,18:8};
 function makeEl(sym){
   const e=EL[sym],b=document.createElement('button');
-  b.className='el'+(e.synth?' synth':'');b.type='button';b.dataset.cat=e.cat;b.dataset.sym=sym;
+  b.className='el';b.type='button';b.dataset.cat=e.cat;b.dataset.sym=sym;
   b.setAttribute('aria-pressed',sym===S.elSym);
   b.innerHTML=`<span class="z">${e.z}</span><span class="s">${sym}</span><span class="n">${e.zh.charAt(0)}</span>`;
   b.onclick=()=>pickEl(sym);
@@ -804,7 +805,6 @@ function buildTable(){
   $('pwrap').className='pwrap '+(compact?'compact':'full');
   const hd=$('phead'),g=$('ptable'),tm=$('tmrow');
   hd.innerHTML='';g.innerHTML='';tm.innerHTML='';
-  $('tmwrap').classList.toggle('hide',!compact);
   $('layoutBtn').textContent=compact?'切換為完整週期表':'切換為主族排列';
 
   const cols=compact?8:18;
@@ -816,17 +816,24 @@ function buildTable(){
   }
   if(compact){
     slot(g,1,1);slot(g,8,1);
-    for(let r=2;r<=7;r++)for(let c=1;c<=8;c++)slot(g,c,r);
+    for(let r=2;r<=6;r++)for(let c=1;c<=8;c++)slot(g,c,r);
+    slot(g,1,7);slot(g,2,7);
   }else{
     tableSlots().forEach(([c,r])=>slot(g,c,r));
   }
+  /* 主表格放不下的：過渡元素（僅主族排列時）與錒系，一律另列於表下 */
+  const extra=[];
   EL_ORDER.forEach(sym=>{
-    const e=EL[sym],b=makeEl(sym);
-    if(compact&&!GA[e.col]){tm.appendChild(b);return;}
+    const e=EL[sym];
+    if(e.fblock||(compact&&!GA[e.col])){extra.push(sym);return;}
+    const b=makeEl(sym);
     b.style.gridColumn=compact?CCOL[e.col]:e.col;
     b.style.gridRow=e.row;
     g.appendChild(b);
   });
+  extra.sort((x,y)=>EL[x].z-EL[y].z).forEach(sym=>tm.appendChild(makeEl(sym)));
+  $('tmwrap').classList.toggle('hide',!extra.length);
+  $('tmlab').textContent=compact?'常見過渡元素與錒系':'錒系（鑭系與錒系另列於表下）';
 }
 function slot(g,c,r){const d=document.createElement('div');d.className='cell';
   d.style.gridColumn=c;d.style.gridRow=r;g.appendChild(d);}
@@ -901,7 +908,7 @@ function panel(){
   if(isEl){
     const e=EL[S.elSym];
     $('tName').textContent=e.zh;$('tFormula').textContent=S.elSym;
-    $('tBadge').textContent=e.cat+' · '+e.state+(e.synth?' · 人工合成':'');
+    $('tBadge').textContent=e.cat+' · '+e.state;
     $('tag').textContent=S.elSym+' · 原子模型';
     $('tFacts').innerHTML=[
       ['原子序（質子數）',e.z],['質量數',e.a],['中子數',e.a-e.z],['電子數',e.z],
